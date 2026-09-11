@@ -80,7 +80,7 @@ export default function Home() {
           <p className={styles.navLabel}>MÓDULOS</p>
           <a className={styles.navItem} href="#instagram"><Camera size={16} /> Instagram</a>
           <a className={styles.navItem} href="/finance"><CircleDollarSign size={16} /> Finanças</a>
-          <a className={styles.navItem} href="#reports"><FileText size={16} /> Relatórios</a>
+          <a className={styles.navItem} href="/reports"><FileText size={16} /> Relatórios</a>
           <a className={styles.navItem} href="#docs"><FileText size={16} /> Documentação</a>
         </nav>
         <div className={styles.sidebarFooter}><div className={styles.avatar}>F</div><div><strong>Administrador</strong><small>Global admin</small></div><MoreHorizontal size={16} /></div>

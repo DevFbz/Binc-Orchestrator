@@ -19,6 +19,7 @@ from finance import summarize_period
 from finance_store import load_entries
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from project_registry import list_projects
+from report_engine import build_overview_report
 from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,7 @@ def route_description(path: str, *, today: date | None = None):
     routes = {
         "/api/projects": "project_registry",
         "/api/jobs": "job_registry",
+        "/api/reports/overview": "report_engine",
         "/api/finance/summary": "finance",
         "/api/campaigns": "instagram_proxy",
         "/api/tenants": "tenant_registry",
@@ -92,6 +94,16 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/jobs":
                 jobs = list_jobs()
                 self.send_json({"jobs": jobs, "summary": summarize_jobs(jobs)})
+                return
+            if path == "/api/reports/overview":
+                today = date.today()
+                start = query.get("start", [today.replace(day=1).isoformat()])[0]
+                end = query.get("end", [today.isoformat()])[0]
+                campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
+                jobs = list_jobs()
+                report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
+                self.send_json(report)
                 return
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))
