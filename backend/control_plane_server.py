@@ -20,6 +20,7 @@ from finance_store import load_entries
 from audit_log import append_audit, read_recent
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
+from onboarding import onboarding_checklist
 from observability import summarize_health
 from project_registry import list_projects
 from report_engine import build_overview_report
@@ -28,6 +29,7 @@ from tenant_registry import list_tenants
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
+WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 
 
@@ -38,6 +40,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/reports/overview": "report_engine",
         "/api/system/health": "observability",
         "/api/audit/recent": "audit",
+        "/api/onboarding": "onboarding",
         "/api/finance/summary": "finance",
         "/api/campaigns": "instagram_proxy",
         "/api/tenants": "tenant_registry",
@@ -124,6 +127,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/audit/recent":
                 limit = min(int(query.get("limit", [50])[0]), 200)
                 self.send_json({"events": read_recent(AUDIT_LOG, limit)})
+                return
+            if path == "/api/onboarding":
+                workspaces = json.loads(WORKSPACES.read_text(encoding="utf-8")).get("workspaces", [])
+                self.send_json({"workspaces": [{**workspace, "checklist": onboarding_checklist(workspace)} for workspace in workspaces]})
                 return
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))

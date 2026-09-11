@@ -1,0 +1,22 @@
+{
+  "workspaces": [
+    {
+      "workspace_id": "magu-moto-pecas-filho",
+      "name": "Magú Moto Peças Filho",
+      "owner_id": "admin",
+      "projects": ["instagram-content-operations"],
+      "integrations": ["telegram", "instagram", "azure-blob"],
+      "members": ["admin"],
+      "approval_policy": "human_required"
+    },
+    {
+      "workspace_id": "personal",
+      "name": "Workspace Pessoal",
+      "owner_id": "admin",
+      "projects": ["personal-finance-assistant"],
+      "integrations": [],
+      "members": ["admin"],
+      "approval_policy": "confirmation_required"
+    }
+  ]
+}
