@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 from control_plane_auth import is_authorized
 from finance import summarize_period
 from finance_store import load_entries
-from job_registry import list_jobs, summarize_jobs
+from job_registry import list_jobs, save_jobs, summarize_jobs
 from project_registry import list_projects
 from tenant_registry import list_tenants
 
@@ -110,6 +110,33 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error": "upstream_unavailable", "detail": str(exc)}, 502)
             return
         self.send_json({"error": "not_found"}, 404)
+
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        parts = [part for part in parsed.path.split("/") if part]
+        expected = os.environ.get("CONTROL_PLANE_TOKEN", "")
+        if not is_authorized(self.headers.get("Authorization"), expected):
+            self.send_json({"error": "unauthorized"}, 401)
+            return
+        if len(parts) != 4 or parts[:2] != ["api", "jobs"] or parts[3] not in {"pause", "resume", "run"}:
+            self.send_json({"error": "not_found"}, 404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            body = json.loads(self.rfile.read(length) or b"{}")
+            actor_id = str(body.get("actor_id", "web-admin"))
+            confirm = bool(body.get("confirm", False))
+            action = {"pause": "pause", "resume": "resume", "run": "run_now"}[parts[3]]
+            jobs = list_jobs()
+            job = next(item for item in jobs if item["job_id"] == parts[2])
+            from job_actions import apply_job_action
+            updated = apply_job_action(job, action, actor_id=actor_id, confirm=confirm)
+            save_jobs(jobs)
+            self.send_json({"ok": True, "job": updated})
+        except StopIteration:
+            self.send_json({"error": "job_not_found"}, 404)
+        except (ValueError, PermissionError, json.JSONDecodeError) as exc:
+            self.send_json({"error": str(exc)}, 400)
 
     def log_message(self, fmt, *args):
         print(f"[{self.log_date_time_string()}] {fmt % args}")

@@ -29,3 +29,8 @@ def summarize_jobs(jobs: list[dict]) -> dict:
         "paused": sum(job["status"] == "paused" for job in jobs),
         "approval_required": sum(bool(job["approval_required"]) for job in jobs),
     }
+
+
+def save_jobs(jobs: list[dict], path: Path = DEFAULT_JOBS) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"jobs": jobs}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
