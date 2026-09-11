@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+.vercel/
+.env
+.env.*
+!.env.example
+*.pem
+__pycache__/
+*.py[cod]
+.venv/
+data/finance/entries.jsonl

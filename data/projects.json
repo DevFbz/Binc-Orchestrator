@@ -1,0 +1,22 @@
+{
+  "projects": [
+    {
+      "project_id": "instagram-content-operations",
+      "name": "Instagram Content Operations",
+      "description": "Criação, aprovação e publicação controlada de conteúdo no Instagram.",
+      "status": "operational",
+      "tenant_scope": "multi-tenant",
+      "service": "instagram-studio.service",
+      "capabilities": ["campaigns", "telegram-approval", "feed-publishing", "story-package", "insights"]
+    },
+    {
+      "project_id": "personal-finance-assistant",
+      "name": "Assistente Financeiro/Pessoal",
+      "description": "Organização financeira pessoal, lançamentos, compromissos e relatórios.",
+      "status": "preparation",
+      "tenant_scope": "private-workspace",
+      "service": null,
+      "capabilities": ["income", "expenses", "budgets", "cash-flow", "reports"]
+    }
+  ]
+}
