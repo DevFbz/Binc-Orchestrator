@@ -76,7 +76,7 @@ export default function Home() {
           <a className={`${styles.navItem} ${styles.active}`} href="#overview"><LayoutDashboard size={16} /> Visão geral</a>
           <a className={styles.navItem} href="#projects"><FolderKanban size={16} /> Projetos <b>2</b></a>
           <a className={styles.navItem} href="#tasks"><ListChecks size={16} /> Tarefas</a>
-          <a className={styles.navItem} href="#automations"><Workflow size={16} /> Automações</a>
+          <a className={styles.navItem} href="/jobs"><Workflow size={16} /> Automações</a>
           <p className={styles.navLabel}>MÓDULOS</p>
           <a className={styles.navItem} href="#instagram"><Camera size={16} /> Instagram</a>
           <a className={styles.navItem} href="/finance"><CircleDollarSign size={16} /> Finanças</a>
