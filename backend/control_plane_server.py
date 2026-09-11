@@ -17,13 +17,17 @@ from urllib.request import Request, urlopen
 from control_plane_auth import is_authorized
 from finance import summarize_period
 from finance_store import load_entries
+from audit_log import append_audit, read_recent
+from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
+from observability import summarize_health
 from project_registry import list_projects
 from report_engine import build_overview_report
 from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
+AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 
 
@@ -32,6 +36,8 @@ def route_description(path: str, *, today: date | None = None):
         "/api/projects": "project_registry",
         "/api/jobs": "job_registry",
         "/api/reports/overview": "report_engine",
+        "/api/system/health": "observability",
+        "/api/audit/recent": "audit",
         "/api/finance/summary": "finance",
         "/api/campaigns": "instagram_proxy",
         "/api/tenants": "tenant_registry",
@@ -105,6 +111,20 @@ class Handler(BaseHTTPRequestHandler):
                 report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
                 self.send_json(report)
                 return
+            if path == "/api/system/health":
+                services = [{"service": "binc-control-plane", "status": "operational"}]
+                try:
+                    request = Request(f"{INSTAGRAM_URL.rstrip('/')}/api/health", headers={"Accept": "application/json"})
+                    with urlopen(request, timeout=5) as response:
+                        services.append({"service": "instagram-studio", "status": "operational" if response.status < 400 else "degraded"})
+                except Exception:
+                    services.append({"service": "instagram-studio", "status": "failed"})
+                self.send_json({"services": services, "summary": summarize_health(services)})
+                return
+            if path == "/api/audit/recent":
+                limit = min(int(query.get("limit", [50])[0]), 200)
+                self.send_json({"events": read_recent(AUDIT_LOG, limit)})
+                return
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))
                 return
@@ -144,6 +164,7 @@ class Handler(BaseHTTPRequestHandler):
             from job_actions import apply_job_action
             updated = apply_job_action(job, action, actor_id=actor_id, confirm=confirm)
             save_jobs(jobs)
+            append_audit(AUDIT_LOG, actor_id=actor_id, project_id=job["project_id"], action=action, result="success", details={"job_id": job["job_id"]})
             self.send_json({"ok": True, "job": updated})
         except StopIteration:
             self.send_json({"error": "job_not_found"}, 404)
