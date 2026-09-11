@@ -24,14 +24,15 @@ export async function GET() {
   }
 
   try {
-    const [overview, tenants, campaigns, projects, finance] = await Promise.all([
+    const [overview, tenants, campaigns, projects, jobs, finance] = await Promise.all([
       readJson(baseUrl, "/api/admin/overview"),
       readJson(baseUrl, "/api/tenants"),
       readJson(baseUrl, "/api/campaigns"),
       readJson(baseUrl, "/api/projects"),
+      readJson(baseUrl, "/api/jobs"),
       readJson(baseUrl, "/api/finance/summary?workspace_id=personal"),
     ]);
-    return NextResponse.json({ ok: true, overview, tenants, campaigns, projects, finance });
+    return NextResponse.json({ ok: true, overview, tenants, campaigns, projects, jobs, finance });
   } catch (error) {
     return NextResponse.json(
       { ok: false, code: "control_plane_unavailable", message: error instanceof Error ? error.message : "Falha ao consultar o control plane." },

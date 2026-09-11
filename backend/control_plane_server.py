@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 from control_plane_auth import is_authorized
 from finance import summarize_period
 from finance_store import load_entries
+from job_registry import list_jobs, summarize_jobs
 from project_registry import list_projects
 from tenant_registry import list_tenants
 
@@ -28,6 +29,7 @@ INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 def route_description(path: str, *, today: date | None = None):
     routes = {
         "/api/projects": "project_registry",
+        "/api/jobs": "job_registry",
         "/api/finance/summary": "finance",
         "/api/campaigns": "instagram_proxy",
         "/api/tenants": "tenant_registry",
@@ -86,6 +88,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/api/projects":
                 self.send_json({"projects": list_projects()})
+                return
+            if path == "/api/jobs":
+                jobs = list_jobs()
+                self.send_json({"jobs": jobs, "summary": summarize_jobs(jobs)})
                 return
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))

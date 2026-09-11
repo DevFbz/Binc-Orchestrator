@@ -1,0 +1,32 @@
+{
+  "jobs": [
+    {
+      "job_id": "instagram-preflight-notification",
+      "project_id": "instagram-content-operations",
+      "tenant_id": "magu-moto-pecas-filho",
+      "name": "Pré-revisão Telegram",
+      "status": "active",
+      "schedule": "every minute",
+      "next_action": "notificar 60 minutos antes do slot",
+      "approval_required": true
+    },
+    {
+      "job_id": "binc-control-plane-health",
+      "project_id": "binc-orchestrator",
+      "name": "Saúde do control plane",
+      "status": "active",
+      "schedule": "on request",
+      "next_action": "verificar endpoints",
+      "approval_required": false
+    },
+    {
+      "job_id": "financial-reporting",
+      "project_id": "personal-finance-assistant",
+      "name": "Relatório financeiro mensal",
+      "status": "paused",
+      "schedule": "monthly",
+      "next_action": "aguarda lançamentos e configuração",
+      "approval_required": true
+    }
+  ]
+}
