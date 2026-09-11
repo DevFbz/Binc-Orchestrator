@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import Counter
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,6 +18,7 @@ from control_plane_auth import is_authorized
 from finance import summarize_period
 from finance_store import load_entries
 from project_registry import list_projects
+from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
@@ -28,8 +30,8 @@ def route_description(path: str, *, today: date | None = None):
         "/api/projects": "project_registry",
         "/api/finance/summary": "finance",
         "/api/campaigns": "instagram_proxy",
-        "/api/tenants": "instagram_proxy",
-        "/api/admin/overview": "instagram_proxy",
+        "/api/tenants": "tenant_registry",
+        "/api/admin/overview": "orchestrator_overview",
     }
     if path == "/api/finance/summary" and today is not None:
         return today.replace(day=1).isoformat(), today.isoformat()
@@ -42,6 +44,23 @@ def _finance_summary(query: dict[str, list[str]]) -> dict:
     start = date.fromisoformat(query.get("start", [today.replace(day=1).isoformat()])[0])
     end = date.fromisoformat(query.get("end", [today.isoformat()])[0])
     return {"workspace_id": workspace, "start": start.isoformat(), "end": end.isoformat(), "summary": summarize_period(load_entries(FINANCE_ENTRIES), workspace, start, end)}
+
+
+def overview_for_tenants(tenants: list[dict], campaigns: list[dict]) -> dict:
+    rows = []
+    published = 0
+    for tenant in tenants:
+        relevant = [item for item in campaigns if item.get("tenant_id") == tenant["tenant_id"]]
+        statuses = Counter(item.get("status", "UNKNOWN") for item in relevant)
+        published += statuses.get("PUBLISHED", 0)
+        rows.append({"tenant_id": tenant["tenant_id"], "name": tenant["name"], "active": tenant.get("active", False), "campaigns_by_status": dict(statuses), "campaigns_total": len(relevant)})
+    return {"totals": {"tenants": len(tenants), "campaigns": len(campaigns), "published": published}, "tenants": rows}
+
+
+def _instagram_get(path: str, authorization: str) -> dict:
+    request = Request(f"{INSTAGRAM_URL.rstrip('/')}{path}", headers={"Authorization": authorization, "Accept": "application/json"})
+    with urlopen(request, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -71,11 +90,15 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))
                 return
+            if path == "/api/tenants":
+                self.send_json({"tenants": list_tenants()})
+                return
+            if path == "/api/admin/overview":
+                campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                self.send_json(overview_for_tenants(list_tenants(), campaigns))
+                return
             if route_description(path) == "instagram_proxy":
-                target = f"{INSTAGRAM_URL.rstrip('/')}{self.path}"
-                request = Request(target, headers={"Authorization": self.headers.get("Authorization", ""), "Accept": "application/json"})
-                with urlopen(request, timeout=20) as response:
-                    self.send_json(json.loads(response.read().decode("utf-8")), response.status)
+                self.send_json(_instagram_get(self.path, self.headers.get("Authorization", "")))
                 return
         except Exception as exc:
             self.send_json({"error": "upstream_unavailable", "detail": str(exc)}, 502)

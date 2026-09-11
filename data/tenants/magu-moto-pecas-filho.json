@@ -1,0 +1,21 @@
+{
+  "tenant_id": "magu-moto-pecas-filho",
+  "name": "Magú Moto Peças Filho",
+  "active": true,
+  "timezone": "America/Sao_Paulo",
+  "brand_file": "data/brand.json",
+  "catalog_file": "data/autopecas_data.json",
+  "campaign_directory": "data/campaigns",
+  "storage_prefix": "magu-moto-pecas-filho",
+  "telegram_approval_mode": "human_required",
+  "instagram": {
+    "enabled": true,
+    "publication_mode": "feed_api",
+    "stories_mode": "approved_manual_package"
+  },
+  "schedule": {
+    "feed_slots": ["12:30", "19:30"],
+    "review_lead_minutes": 60,
+    "approval_cutoff_minutes": 30
+  }
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=HTTPS tunnel for Binc Orchestrator control plane
+After=network-online.target binc-control-plane.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hermes/apps/binc-orchestrator
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8791
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

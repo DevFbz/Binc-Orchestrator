@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REGISTRY = ROOT / "data" / "projects.json"
 REQUIRED = {"project_id", "name", "status", "tenant_scope"}
 

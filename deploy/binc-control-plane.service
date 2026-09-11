@@ -1,0 +1,17 @@
+[Unit]
+Description=Binc Orchestrator control plane
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hermes/apps/binc-orchestrator
+EnvironmentFile=/home/hermes/.hermes/.env
+Environment=PYTHONPATH=/home/hermes/apps/binc-orchestrator/backend
+Environment=BINC_CONTROL_PLANE_PORT=8791
+ExecStart=/usr/bin/python3 /home/hermes/apps/binc-orchestrator/backend/control_plane_server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
