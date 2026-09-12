@@ -22,6 +22,7 @@ from finance_setup_store import load_setup, mutate_setup
 from event_store import append_telegram_event, read_recent_events
 from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
+from campaign_matcher import identify_campaigns
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from onboarding import onboarding_checklist
@@ -218,7 +219,13 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/events/telegram":
                 workspace = query.get("workspace_id", [""])[0] or None
                 limit = min(int(query.get("limit", [100])[0]), 500)
-                self.send_json({"events": read_recent_events(TELEGRAM_EVENTS, limit, workspace_id=workspace)})
+                events = read_recent_events(TELEGRAM_EVENTS, limit, workspace_id=workspace)
+                try:
+                    campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                    events = [{**event, "campaign_candidates": identify_campaigns(event, campaigns)} for event in events]
+                except Exception:
+                    events = [{**event, "campaign_candidates": []} for event in events]
+                self.send_json({"events": events})
                 return
             if path == "/api/audit/recent":
                 limit = min(int(query.get("limit", [50])[0]), 200)
