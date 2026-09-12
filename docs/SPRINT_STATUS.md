@@ -21,7 +21,7 @@ Atualizado em 2026-09-12.
 - Adaptador `deploy/hermes-binc-events` instalado no Hermes; 10 eventos reais já persistidos e disponíveis no terminal.
 - Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
 - Sprint 15: composer de texto e imagem via `hermes send`, confirmação explícita, idempotência, outbox, armazenamento privado temporário, auditoria e envio real controlado validados.
-- Sprint 16 em execução: rate limit de mutações, headers de segurança, métricas operacionais, runbook, smoke test público, E2E da VM e threat model concluídos; rollback documentado, mas não executado em produção; revisão final de RBAC ainda pendente.
+- Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
 - Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações

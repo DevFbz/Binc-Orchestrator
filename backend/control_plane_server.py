@@ -31,6 +31,7 @@ from onboarding import onboarding_checklist
 from observability import summarize_health, summarize_metrics
 from project_registry import list_projects
 from rate_limiter import RateLimiter
+from rbac import can_perform_action
 from report_engine import build_overview_report
 from tenant_registry import list_tenants
 
@@ -45,6 +46,7 @@ WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 COFRINIA_BRIDGE_URL = os.environ.get("COFRINIA_BRIDGE_URL", "http://127.0.0.1:8790")
 CONTROL_PLANE_ACTOR = "control-plane-admin"
+CONTROL_PLANE_ROLE = os.environ.get("CONTROL_PLANE_ROLE", "global_admin")
 MUTATION_LIMITER = RateLimiter(limit=30, window_seconds=60)
 
 
@@ -303,6 +305,18 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
+            return
+        action_by_path = ""
+        if parsed.path in {"/api/terminal/messages", "/api/terminal/media"}:
+            action_by_path = "send_telegram"
+        elif parsed.path == "/api/finance/entries":
+            action_by_path = "create_financial_entry"
+        elif parsed.path in {"/api/finance/categories", "/api/finance/accounts", "/api/finance/recurrences"}:
+            action_by_path = "manage_onboarding"
+        elif len(parts) == 4 and parts[:2] == ["api", "jobs"]:
+            action_by_path = "manage_jobs"
+        if action_by_path and not can_perform_action(CONTROL_PLANE_ROLE, action_by_path):
+            self.send_json({"error": "forbidden", "code": "rbac_denied"}, 403)
             return
         if parsed.path == "/api/terminal/media":
             try:
