@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { authEnabled, readSession, SESSION_COOKIE } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,11 @@ function secureJson(payload: unknown, init: ResponseInit = {}) {
   return new NextResponse(JSON.stringify(payload), { ...init, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", ...init.headers } });
 }
 
+async function currentRole() {
+  if (!authEnabled()) return "global_admin";
+  return readSession((await cookies()).get(SESSION_COOKIE)?.value)?.role || null;
+}
+
 async function readJson(baseUrl: string, path: string) {
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, { headers: authHeaders(), cache: "no-store" });
   if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
@@ -23,6 +30,8 @@ async function readJson(baseUrl: string, path: string) {
 export async function GET() {
   const baseUrl = process.env.HERMES_CONTROL_PLANE_URL;
   if (!baseUrl) return secureJson({ ok: false, code: "control_plane_not_configured", message: "Configure HERMES_CONTROL_PLANE_URL na Vercel." }, { status: 503 });
+  const role = await currentRole();
+  if (authEnabled() && !role) return secureJson({ ok: false, code: "unauthorized" }, { status: 401 });
   try {
     const [overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, events, maguMembers, personalMembers] = await Promise.all([
       readJson(baseUrl, "/api/admin/overview"),
@@ -39,7 +48,7 @@ export async function GET() {
       readJson(baseUrl, "/api/members?workspace_id=magu-moto-pecas-filho"),
       readJson(baseUrl, "/api/members?workspace_id=personal"),
     ]);
-    return secureJson({ ok: true, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events, members: { magu: maguMembers, personal: personalMembers } });
+    return secureJson({ ok: true, role, permissions: { can_read: true, can_send_telegram: role === "global_admin" || role === "workspace_admin", can_manage_members: role === "global_admin" || role === "workspace_admin", can_manage_jobs: role === "global_admin" || role === "workspace_admin", can_create_financial_entry: role === "global_admin" || role === "workspace_admin" }, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events, members: { magu: maguMembers, personal: personalMembers } });
   } catch (error) {
     return secureJson({ ok: false, code: "control_plane_unavailable", message: error instanceof Error ? error.message : "Falha ao consultar o control plane." }, { status: 502 });
   }
