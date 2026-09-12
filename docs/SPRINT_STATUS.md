@@ -18,6 +18,7 @@ Atualizado em 2026-09-12.
 - Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
 - Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
 - Sprint 13 em execução: contrato validado e ingestão idempotente de eventos Telegram do Instagram.
+- Adaptador `deploy/hermes-binc-events` instalado no Hermes; restart separado do gateway pendente para ativar o hook.
 - Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações

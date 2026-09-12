@@ -1,0 +1,3 @@
+name: binc-telegram-events
+version: "0.1"
+description: Sends authorized Instagram Telegram conversation events to Binc
