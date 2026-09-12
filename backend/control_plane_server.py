@@ -35,7 +35,22 @@ FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
+COFRINIA_BRIDGE_URL = os.environ.get("COFRINIA_BRIDGE_URL", "http://127.0.0.1:8790")
 CONTROL_PLANE_ACTOR = "control-plane-admin"
+
+
+def cofrinia_health_status(base_url: str = COFRINIA_BRIDGE_URL, *, opener=urlopen) -> dict[str, str]:
+    request = Request(f"{base_url.rstrip('/')}/health", headers={"Accept": "application/json"})
+    try:
+        with opener(request, timeout=5) as response:
+            if response.status >= 400:
+                return {"service": "cofrinia-hermes-bridge", "status": "degraded"}
+            payload = json.loads(response.read().decode("utf-8"))
+            if payload.get("status") != "ok":
+                return {"service": "cofrinia-hermes-bridge", "status": "degraded"}
+            return {"service": "cofrinia-hermes-bridge", "status": "operational"}
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {"service": "cofrinia-hermes-bridge", "status": "failed"}
 
 
 def route_description(path: str, *, today: date | None = None):
@@ -187,6 +202,7 @@ class Handler(BaseHTTPRequestHandler):
                         services.append({"service": "instagram-studio", "status": "operational" if response.status < 400 else "degraded"})
                 except Exception:
                     services.append({"service": "instagram-studio", "status": "failed"})
+                services.append(cofrinia_health_status())
                 self.send_json({"services": services, "summary": summarize_health(services)})
                 return
             if path == "/api/audit/recent":

@@ -210,7 +210,7 @@ O token do control plane é server-side e nunca deve ser respondido ao usuário.
 ## Workspaces atuais
 
 - `magu-moto-pecas-filho`: onboarding completo para Instagram.
-- `personal`: workspace privado do CofrinIA Finance, com bridge em configuração.
+- `personal`: workspace privado do CofrinIA Finance, com bridge ativo e monitorado pelo control plane.
 
 Magú Moto Peças Filho é apenas o primeiro tenant. Nunca transformar sua marca em regra global.
 

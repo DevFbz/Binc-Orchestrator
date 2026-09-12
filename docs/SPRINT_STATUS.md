@@ -15,6 +15,7 @@ Atualizado em 2026-09-12.
 - Sprint 8: painel de onboarding, governança e autenticação web server-side.
 - Sprint 9: estrutura financeira persistente por workspace (legado, não catalogado como projeto).
 - Sprint 10: unificação do domínio financeiro no CofrinIA Finance.
+- Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
 
 ## Validações
 
@@ -79,6 +80,29 @@ Entregue:
 - jobs, workspace pessoal e auditoria financeira apontam para `cofrinia-finance`;
 - dashboard exibe o CofrinIA e não oferece o módulo financeiro duplicado como projeto;
 - identificação visual do administrador atualizada para Breno.
+
+## Sprint 11 — Integração monitorada com o bridge do CofrinIA
+
+Entregue:
+
+- bridge oficial verificado em `127.0.0.1:8790`;
+- serviço `cofrinia-hermes-bridge.service` ativo;
+- endpoint `/health` respondendo com status `ok`;
+- Binc passou a consultar o health do bridge em `/api/system/health`;
+- status do bridge classificado como `operational`, `degraded` ou `failed`;
+- integração coberta por testes automatizados;
+- nenhum endpoint financeiro ou domínio do CofrinIA foi duplicado no Binc.
+
+Validação em produção local:
+
+```text
+binc-control-plane: operational
+instagram-studio: operational
+cofrinia-hermes-bridge: operational
+36 testes Python passando
+npm run lint passando
+npm run build passando
+```
 
 ## Dependências externas não falsificadas como concluídas
 
