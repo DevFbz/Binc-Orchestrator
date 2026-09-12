@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, FileText, ShieldCheck } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 import styles from "./page.module.css";
 
 const documents = [
@@ -13,5 +14,6 @@ export default function DocsPage() {
     <header className={styles.header}><Link href="/" className={styles.back}><ArrowLeft size={16} /> Visão geral</Link><span className={styles.secure}><ShieldCheck size={14} /> Documentação interna</span></header>
     <section className={styles.hero}><div><p className={styles.kicker}>REFERÊNCIAS</p><h1>Documentação<span>.</span></h1><p className={styles.subtitle}>PRDs, auditorias e decisões operacionais do Binc Orchestrator.</p></div><FileText size={34} className={styles.heroIcon} /></section>
     <section className={styles.list}>{documents.map(([title, href, description]) => <article className={styles.card} key={href}><FileText size={19} className={styles.icon} /><div><h2>{title}</h2><p>{description}</p></div><Link href={href} className={styles.open}>Abrir arquivo</Link></article>)}</section>
+    <MobileNav />
   </main>;
 }
