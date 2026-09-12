@@ -34,6 +34,7 @@ from project_registry import list_projects, save_projects, update_project_status
 from rate_limiter import RateLimiter
 from rbac import can_perform_action
 from report_engine import build_overview_report
+from report_export import report_to_csv
 from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +80,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/projects/status": "project_registry",
         "/api/jobs": "job_registry",
         "/api/reports/overview": "report_engine",
+        "/api/reports/export": "report_engine",
         "/api/system/health": "observability",
         "/api/system/metrics": "observability",
         "/api/audit/recent": "audit",
@@ -194,6 +196,17 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def send_csv(self, body: str, filename: str = "binc-report.csv"):
+        raw = body.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -212,6 +225,16 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/jobs":
                 jobs = list_jobs()
                 self.send_json({"jobs": jobs, "summary": summarize_jobs(jobs)})
+                return
+            if path == "/api/reports/export":
+                today = date.today()
+                start = query.get("start", [today.replace(day=1).isoformat()])[0]
+                end = query.get("end", [today.isoformat()])[0]
+                campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
+                jobs = list_jobs()
+                report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
+                self.send_csv(report_to_csv(report), f"binc-report-{start}-{end}.csv")
                 return
             if path == "/api/reports/overview":
                 today = date.today()
