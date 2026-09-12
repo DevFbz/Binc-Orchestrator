@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import os
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -25,6 +25,7 @@ from audit_log import append_audit, read_recent
 from campaign_matcher import identify_campaigns
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
+from message_composer import dispatch_admin_message
 from onboarding import onboarding_checklist
 from observability import summarize_health
 from project_registry import list_projects
@@ -35,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
 FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
 TELEGRAM_EVENTS = ROOT / "data" / "events" / "telegram.jsonl"
+MESSAGE_OUTBOX = ROOT / "data" / "outbox" / "telegram-admin.jsonl"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
@@ -72,6 +74,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
         "/api/events/telegram": "telegram_events",
+        "/api/terminal/messages": "telegram_admin_send",
         "/api/finance/summary": "finance",
         "/api/finance/setup": "finance_setup",
         "/api/finance/categories": "finance_setup",
@@ -283,6 +286,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
+            return
+        if parsed.path == "/api/terminal/messages":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                events = read_recent_events(TELEGRAM_EVENTS, 500, workspace_id="magu-moto-pecas-filho")
+                result = dispatch_admin_message(body, events, MESSAGE_OUTBOX)
+                if result["status"] == "sent":
+                    target = next(item for item in events if item.get("conversation_id") == body["conversation_id"])
+                    outbound = {"event_id": f"admin-out-{body['idempotency_key']}", "occurred_at": datetime.now(timezone.utc).isoformat(), "channel": "telegram", "direction": "outbound", "actor_type": "admin_assisted", "workspace_id": target["workspace_id"], "tenant_id": target.get("tenant_id"), "project_id": "instagram-content-operations", "conversation_id": target["conversation_id"], "external_user_ref": target["external_user_ref"], "message_type": "text", "text": body["text"], "media_ref": None, "campaign_id": target.get("campaign_id"), "intent": None, "delivery_status": "sent", "correlation_id": body["idempotency_key"]}
+                    append_telegram_event(TELEGRAM_EVENTS, outbound)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="instagram-content-operations", action="admin_send_telegram", result=result["status"], details={"conversation_id": body.get("conversation_id"), "idempotency_key": body.get("idempotency_key")})
+                self.send_json(result, 200 if result["status"] == "sent" else 502)
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/finance/entries":
             try:
