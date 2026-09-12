@@ -29,7 +29,7 @@ Atualizado em 2026-09-12.
 ## Validações
 
 ```text
-63 testes Python passando no Binc Orchestrator
+68 testes Python passando no Binc Orchestrator
 lint ESLint sem erros
 build Next.js de produção concluído, incluindo a rota `/terminal`
 arquivos Python compilados na VM
