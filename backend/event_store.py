@@ -97,6 +97,21 @@ def append_telegram_event(path: Path, payload: dict[str, Any]) -> dict[str, Any]
         return {"accepted": True, "duplicate": False, "event_id": event["event_id"]}
 
 
+def filter_telegram_events(events: list[dict[str, Any]], *, query: str = "", delivery_status: str = "", campaign_id: str = "") -> list[dict[str, Any]]:
+    needle = query.strip().casefold()
+    result = []
+    for event in events:
+        haystack = " ".join(str(event.get(key, "")) for key in ("text", "external_user_ref", "conversation_id", "campaign_id", "post_id")).casefold()
+        if needle and needle not in haystack:
+            continue
+        if delivery_status and event.get("delivery_status") != delivery_status:
+            continue
+        if campaign_id and event.get("campaign_id") != campaign_id:
+            continue
+        result.append(event)
+    return result
+
+
 def read_recent_events(path: Path, limit: int = 100, *, workspace_id: str | None = None) -> list[dict[str, Any]]:
     if limit <= 0:
         return []
