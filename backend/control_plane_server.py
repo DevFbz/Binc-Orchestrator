@@ -27,6 +27,7 @@ from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from message_composer import dispatch_admin_message
 from media_composer import dispatch_admin_media
+from member_registry import list_workspace_members
 from onboarding import onboarding_checklist
 from observability import summarize_health, summarize_metrics
 from project_registry import list_projects
@@ -43,6 +44,7 @@ MESSAGE_OUTBOX = ROOT / "data" / "outbox" / "telegram-admin.jsonl"
 PRIVATE_MEDIA = ROOT / "data" / "private-media"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
+MEMBERS = ROOT / "data" / "members.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 COFRINIA_BRIDGE_URL = os.environ.get("COFRINIA_BRIDGE_URL", "http://127.0.0.1:8790")
 CONTROL_PLANE_ACTOR = "control-plane-admin"
@@ -80,6 +82,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/system/metrics": "observability",
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
+        "/api/members": "member_registry",
         "/api/events/telegram": "telegram_events",
         "/api/terminal/messages": "telegram_admin_send",
         "/api/terminal/media": "telegram_admin_media",
@@ -248,6 +251,13 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/audit/recent":
                 limit = min(int(query.get("limit", [50])[0]), 200)
                 self.send_json({"events": read_recent(AUDIT_LOG, limit)})
+                return
+            if path == "/api/members":
+                workspace = query.get("workspace_id", [""])[0]
+                if not workspace:
+                    self.send_json({"error": "workspace_id obrigatório"}, 400)
+                    return
+                self.send_json({"workspace_id": workspace, "members": list_workspace_members(MEMBERS, workspace)})
                 return
             if path == "/api/onboarding":
                 workspaces = json.loads(WORKSPACES.read_text(encoding="utf-8")).get("workspaces", [])
