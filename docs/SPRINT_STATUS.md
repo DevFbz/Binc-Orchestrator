@@ -24,7 +24,7 @@ Atualizado em 2026-09-12.
 - Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
 - Sprint 17: shell desktop, conteúdo por seção, menu mobile, Roboto, popovers, dados live e Terminal chatbot concluídos.
 - Sprint 18: registro, convite, listagem, ativação/suspensão de membros por workspace; confirmação, RBAC, auditoria visual e controle de status dos projetos implementados.
-- Sprint 19 em execução: exportação CSV e PDF do relatório executivo com período, fontes, limitações e métricas agregadas; relatórios agendados ainda pendentes.
+- Sprint 19 em execução: relatórios CSV/PDF, filtros de período, workspace e projeto, escopo financeiro sem mistura de domínios; relatórios agendados e entrega pelo Telegram ainda pendentes.
 
 ## Validações
 

@@ -33,7 +33,7 @@ from observability import summarize_health, summarize_metrics
 from project_registry import list_projects, save_projects, update_project_status
 from rate_limiter import RateLimiter
 from rbac import can_perform_action
-from report_engine import build_overview_report
+from report_engine import build_overview_report, scope_finance_summary, scope_report_data
 from report_export import report_to_csv
 from report_pdf import report_to_pdf
 from tenant_registry import list_tenants
@@ -244,7 +244,10 @@ class Handler(BaseHTTPRequestHandler):
                 campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
                 finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
                 jobs = list_jobs()
-                report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
+                project_filter = query.get("project_id", [""])[0]
+                finance = scope_finance_summary(finance, project_filter)
+                report_projects, report_campaigns = scope_report_data(list_projects(), campaigns, project_filter)
+                report = build_overview_report(start, end, report_projects, {"summary": summarize_jobs(jobs)}, {"total": len(report_campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in report_campaigns)}, finance)
                 export_format = query.get("format", ["csv"])[0].casefold()
                 if export_format == "pdf":
                     self.send_pdf(report_to_pdf(report), f"binc-report-{start}-{end}.pdf")
@@ -260,7 +263,10 @@ class Handler(BaseHTTPRequestHandler):
                 campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
                 finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
                 jobs = list_jobs()
-                report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
+                project_filter = query.get("project_id", [""])[0]
+                finance = scope_finance_summary(finance, project_filter)
+                report_projects, report_campaigns = scope_report_data(list_projects(), campaigns, project_filter)
+                report = build_overview_report(start, end, report_projects, {"summary": summarize_jobs(jobs)}, {"total": len(report_campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in report_campaigns)}, finance)
                 self.send_json(report)
                 return
             if path == "/api/system/metrics":
