@@ -19,6 +19,7 @@ from finance import summarize_period
 from finance_commands import create_financial_entry
 from finance_setup import create_account, create_category, create_recurrence, scoped_setup
 from finance_setup_store import load_setup, mutate_setup
+from event_store import append_telegram_event, read_recent_events
 from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
 from job_actions import apply_job_action
@@ -32,6 +33,7 @@ from tenant_registry import list_tenants
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
 FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
+TELEGRAM_EVENTS = ROOT / "data" / "events" / "telegram.jsonl"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
@@ -53,6 +55,13 @@ def cofrinia_health_status(base_url: str = COFRINIA_BRIDGE_URL, *, opener=urlope
         return {"service": "cofrinia-hermes-bridge", "status": "failed"}
 
 
+def ingest_telegram_event(payload: dict, authorization: str | None, expected_token: str, path: Path = TELEGRAM_EVENTS) -> tuple[int, dict]:
+    if not is_authorized(authorization, expected_token):
+        raise PermissionError("não autorizado")
+    result = append_telegram_event(path, payload)
+    return 202, result
+
+
 def route_description(path: str, *, today: date | None = None):
     routes = {
         "/api/projects": "project_registry",
@@ -61,6 +70,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/system/health": "observability",
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
+        "/api/events/telegram": "telegram_events",
         "/api/finance/summary": "finance",
         "/api/finance/setup": "finance_setup",
         "/api/finance/categories": "finance_setup",
@@ -205,6 +215,11 @@ class Handler(BaseHTTPRequestHandler):
                 services.append(cofrinia_health_status())
                 self.send_json({"services": services, "summary": summarize_health(services)})
                 return
+            if path == "/api/events/telegram":
+                workspace = query.get("workspace_id", [""])[0] or None
+                limit = min(int(query.get("limit", [100])[0]), 500)
+                self.send_json({"events": read_recent_events(TELEGRAM_EVENTS, limit, workspace_id=workspace)})
+                return
             if path == "/api/audit/recent":
                 limit = min(int(query.get("limit", [50])[0]), 200)
                 self.send_json({"events": read_recent(AUDIT_LOG, limit)})
@@ -247,6 +262,18 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         parts = [part for part in parsed.path.split("/") if part]
         expected = os.environ.get("CONTROL_PLANE_TOKEN", "")
+        if parsed.path == "/api/events/telegram":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                status, result = ingest_telegram_event(body, self.headers.get("Authorization"), os.environ.get("HERMES_EVENT_INGEST_TOKEN", ""))
+                append_audit(AUDIT_LOG, actor_id="hermes-gateway", project_id="instagram-content-operations", action="ingest_telegram_event", result="duplicate" if result["duplicate"] else "success", details={"event_id": result["event_id"]})
+                self.send_json(result, status)
+            except PermissionError as exc:
+                self.send_json({"error": str(exc)}, 401)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
             return

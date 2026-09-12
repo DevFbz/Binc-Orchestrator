@@ -134,6 +134,15 @@ O contrato entre Hermes Gateway, Binc e Instagram deverá ser versionado e inclu
 
 O `external_user_ref` não deve ser exibido integralmente por padrão. O token e credenciais ficam exclusivamente server-side.
 
+Endpoint inicial do Binc:
+
+```text
+POST /api/events/telegram
+GET  /api/events/telegram?workspace_id=...
+```
+
+A ingestão usa `HERMES_EVENT_INGEST_TOKEN` no ambiente server-side, aceita apenas `project_id=instagram-content-operations`, grava em formato append-only e trata `event_id` repetido como idempotente. O token não deve ser reutilizado pelo navegador nem confundido com o token administrativo do control plane.
+
 ## 8. Refinamento do prompt mestre
 
 Usar este prompt como contrato de execução para as próximas sprints:

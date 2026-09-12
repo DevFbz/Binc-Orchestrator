@@ -12,6 +12,7 @@ def test_route_description_separates_project_and_finance_domains():
     assert route_description("/api/finance/categories") == "finance_setup"
     assert route_description("/api/finance/accounts") == "finance_setup"
     assert route_description("/api/finance/recurrences") == "finance_setup"
+    assert route_description("/api/events/telegram") == "telegram_events"
     assert route_description("/api/campaigns") == "instagram_proxy"
     assert route_description("/unknown") is None
 
