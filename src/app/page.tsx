@@ -87,6 +87,7 @@ export default function Home() {
           <a className={styles.navItem} href="/onboarding"><ShieldCheck size={16} /> Governança</a>
           <p className={styles.navLabel}>MÓDULOS</p>
           <Link className={styles.navItem} href="/projects?project=instagram-content-operations"><Camera size={16} /> Instagram</Link>
+          <Link className={styles.navItem} href="/terminal"><Bot size={16} /> Terminal Telegram</Link>
           <a className={styles.navItem} href="https://github.com/DevFbz/CofrinIA---Agente-Financeiro" target="_blank" rel="noreferrer"><CircleDollarSign size={16} /> CofrinIA Finance</a>
           <a className={styles.navItem} href="/reports"><FileText size={16} /> Relatórios</a>
           <a className={styles.navItem} href="/docs"><FileText size={16} /> Documentação</a>

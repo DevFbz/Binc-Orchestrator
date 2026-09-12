@@ -17,16 +17,17 @@ Atualizado em 2026-09-12.
 - Sprint 10: unificação do domínio financeiro no CofrinIA Finance.
 - Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
 - Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
-- Sprint 13 em execução: contrato validado e ingestão idempotente de eventos Telegram do Instagram.
+- Sprint 13: contrato validado e ingestão idempotente de eventos Telegram do Instagram; adaptador do Hermes criado para emissão assíncrona.
 - Adaptador `deploy/hermes-binc-events` instalado no Hermes; restart separado do gateway pendente para ativar o hook.
+- Sprint 14 em execução: terminal administrativo somente leitura conectado à consulta server-side dos eventos do workspace Instagram.
 - Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações
 
 ```text
-34 testes Python passando no Binc Orchestrator
+42 testes Python passando no Binc Orchestrator
 lint ESLint sem erros
-build Next.js de produção concluído
+build Next.js de produção concluído, incluindo a rota `/terminal`
 arquivos Python compilados na VM
 instagram-studio.service ativo
 plugin instalado em ~/.hermes/plugins/instagram-approval
