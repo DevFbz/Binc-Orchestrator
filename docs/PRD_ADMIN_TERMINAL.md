@@ -8,7 +8,9 @@
 
 ## 1. Problema
 
-O painel administrativo do Binc apresenta alguns controles sem comportamento funcional e não oferece uma visão operacional do diálogo entre o usuário e o bot. O administrador precisa conseguir acompanhar uma solicitação, identificar qual campanha/post foi referido e, quando necessário, responder pelo canal oficial como Hermes, com transparência, confirmação e auditoria.
+O painel administrativo do Binc apresenta alguns controles sem comportamento funcional e não oferece uma visão operacional do diálogo entre o usuário e o bot de Instagram. O administrador precisa conseguir acompanhar uma solicitação de postagem, identificar qual campanha/post foi referido e, quando necessário, responder pelo canal oficial como Hermes, com transparência, confirmação e auditoria.
+
+**Escopo inicial do terminal:** somente mensagens do bot do Telegram relacionadas ao fluxo `Instagram Content Operations`: solicitação de post/feed, criação de campanha, revisão de legenda, envio/recebimento de imagem, aprovação e publicação. Conversas do CofrinIA Finance e outros domínios ficam fora deste terminal.
 
 ## 2. Objetivo
 
@@ -26,6 +28,7 @@ Criar um terminal administrativo seguro, dentro do Binc, que permita:
 
 - criar um segundo bot Telegram;
 - fazer polling do Telegram pelo frontend ou pelo Binc;
+- incluir conversas financeiras do CofrinIA no terminal inicial;
 - duplicar campanhas ou o domínio Instagram no Binc;
 - duplicar o CofrinIA Finance;
 - expor token do Telegram, Meta, WhatsApp ou control plane no navegador;
@@ -271,6 +274,49 @@ Aceite:
 - testes locais e de integração aprovados;
 - deploy verificado por leitura real do serviço;
 - nenhuma credencial ou dado sensível exposto.
+
+### Sprint 17 — Responsividade mobile e navegação flutuante
+
+**Objetivo:** tornar o painel administrativo Binc totalmente utilizável em celulares sem alterar a navegação desktop.
+
+Entregas:
+
+- layout responsivo para dashboard, projetos, automações, governança, relatórios e terminal;
+- menu flutuante horizontal fixado na parte inferior somente em dispositivos móveis;
+- ícone e rótulo curto para cada opção principal da barra lateral;
+- estados ativo, foco, pressionado e desabilitado claramente visíveis;
+- área segura para aparelhos com `safe-area-inset-bottom`;
+- rolagem horizontal controlada quando a quantidade de opções exceder a largura;
+- menu desktop lateral preservado em telas maiores;
+- terminal com composer, anexos e timeline adaptados para toque;
+- testes em larguras mobile, tablet e desktop, incluindo orientação estreita.
+
+Opções mínimas do menu mobile:
+
+- Visão geral;
+- Projetos;
+- Tarefas;
+- Automações;
+- Governança;
+- Instagram;
+- Relatórios;
+- Terminal, quando o recurso estiver habilitado.
+
+Restrições:
+
+- o menu flutuante não deve aparecer no desktop;
+- não usar somente cor para indicar a opção ativa;
+- não esconder ações críticas atrás de gesto não documentado;
+- não permitir que o menu cubra o composer, botões de confirmação ou conteúdo essencial;
+- navegação deve manter o workspace e as permissões atuais.
+
+Aceite:
+
+- em viewport mobile, todas as opções principais ficam acessíveis pelo menu inferior;
+- em viewport desktop, a barra lateral continua sendo usada e o menu inferior não aparece;
+- nenhum texto, botão ou anexo fica cortado ou inacessível;
+- navegação por teclado e leitores de tela mantém nomes acessíveis;
+- testes automatizados e validação visual passam nas larguras definidas.
 
 ## 10. Riscos e decisões pendentes
 

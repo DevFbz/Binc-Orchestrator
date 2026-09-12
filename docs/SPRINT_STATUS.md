@@ -17,6 +17,7 @@ Atualizado em 2026-09-12.
 - Sprint 10: unificação do domínio financeiro no CofrinIA Finance.
 - Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
 - Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
+- Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações
 
