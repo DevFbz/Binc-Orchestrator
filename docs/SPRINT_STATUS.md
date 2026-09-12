@@ -16,6 +16,7 @@ Atualizado em 2026-09-12.
 - Sprint 9: estrutura financeira persistente por workspace (legado, não catalogado como projeto).
 - Sprint 10: unificação do domínio financeiro no CofrinIA Finance.
 - Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
+- Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
 
 ## Validações
 

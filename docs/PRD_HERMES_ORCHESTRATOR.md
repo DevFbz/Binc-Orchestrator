@@ -693,7 +693,11 @@ ENTREGÁVEIS DE CADA SPRINT
 COMECE PELA SPRINT 0. Antes de codificar, inspecione os dois projetos existentes, preserve o funcionamento atual e produza o mapa de integração e o contrato de dados multi-tenant.
 ```
 
-## 15. Definição de pronto global
+## 15. PRD complementar do terminal administrativo
+
+A próxima frente de execução está especificada em `docs/PRD_ADMIN_TERMINAL.md`. Ela cobre a auditoria dos botões sem ação, o contrato de eventos do Hermes, o terminal de conversas, identificação de campanhas/posts, envio confirmado de texto/imagem e hardening operacional. O Binc continua sendo control plane; o Hermes Gateway permanece como único processo que conversa diretamente com o Telegram.
+
+## 16. Definição de pronto global
 
 A plataforma só será considerada pronta quando:
 

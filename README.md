@@ -10,7 +10,8 @@ Este repositório contém a plataforma de administração:
 - control plane de projetos;
 - integração com o CofrinIA Finance pelo bridge oficial;
 - proxy autenticado para o projeto Instagram;
-- relatórios, tarefas, jobs e documentação futura.
+- relatórios, tarefas, jobs e documentação futura;
+- terminal administrativo de conversas, planejado em `docs/PRD_ADMIN_TERMINAL.md`.
 
 ## Repositórios separados
 
