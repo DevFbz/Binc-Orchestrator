@@ -24,7 +24,7 @@ export async function GET() {
   const baseUrl = process.env.HERMES_CONTROL_PLANE_URL;
   if (!baseUrl) return secureJson({ ok: false, code: "control_plane_not_configured", message: "Configure HERMES_CONTROL_PLANE_URL na Vercel." }, { status: 503 });
   try {
-    const [overview, tenants, campaigns, projects, jobs, report, health, audit, onboarding, events] = await Promise.all([
+    const [overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, events] = await Promise.all([
       readJson(baseUrl, "/api/admin/overview"),
       readJson(baseUrl, "/api/tenants"),
       readJson(baseUrl, "/api/campaigns"),
@@ -32,11 +32,12 @@ export async function GET() {
       readJson(baseUrl, "/api/jobs"),
       readJson(baseUrl, "/api/reports/overview"),
       readJson(baseUrl, "/api/system/health"),
+      readJson(baseUrl, "/api/system/metrics"),
       readJson(baseUrl, "/api/audit/recent"),
       readJson(baseUrl, "/api/onboarding"),
       readJson(baseUrl, "/api/events/telegram?workspace_id=magu-moto-pecas-filho&limit=100"),
     ]);
-    return secureJson({ ok: true, overview, tenants, campaigns, projects, jobs, report, health, audit, onboarding, telegramEvents: events });
+    return secureJson({ ok: true, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events });
   } catch (error) {
     return secureJson({ ok: false, code: "control_plane_unavailable", message: error instanceof Error ? error.message : "Falha ao consultar o control plane." }, { status: 502 });
   }

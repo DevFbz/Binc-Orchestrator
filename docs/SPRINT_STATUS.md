@@ -21,12 +21,13 @@ Atualizado em 2026-09-12.
 - Adaptador `deploy/hermes-binc-events` instalado no Hermes; 10 eventos reais já persistidos e disponíveis no terminal.
 - Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
 - Sprint 15 em execução: composer de texto e imagem via `hermes send`, confirmação explícita, idempotência, outbox, armazenamento privado temporário e auditoria; envio real controlado ainda não executado em produção.
+- Sprint 16 em execução: rate limit de mutações, headers de segurança e métricas operacionais agregadas; runbook, rollback e E2E ainda pendentes.
 - Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações
 
 ```text
-42 testes Python passando no Binc Orchestrator
+55 testes Python passando no Binc Orchestrator
 lint ESLint sem erros
 build Next.js de produção concluído, incluindo a rota `/terminal`
 arquivos Python compilados na VM

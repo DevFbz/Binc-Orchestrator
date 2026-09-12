@@ -28,7 +28,7 @@ from job_registry import list_jobs, save_jobs, summarize_jobs
 from message_composer import dispatch_admin_message
 from media_composer import dispatch_admin_media
 from onboarding import onboarding_checklist
-from observability import summarize_health
+from observability import summarize_health, summarize_metrics
 from project_registry import list_projects
 from rate_limiter import RateLimiter
 from report_engine import build_overview_report
@@ -75,6 +75,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/jobs": "job_registry",
         "/api/reports/overview": "report_engine",
         "/api/system/health": "observability",
+        "/api/system/metrics": "observability",
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
         "/api/events/telegram": "telegram_events",
@@ -215,6 +216,10 @@ class Handler(BaseHTTPRequestHandler):
                 jobs = list_jobs()
                 report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
                 self.send_json(report)
+                return
+            if path == "/api/system/metrics":
+                events = read_recent_events(TELEGRAM_EVENTS, 500)
+                self.send_json({"metrics": summarize_metrics(events, read_recent(AUDIT_LOG, 200), list_jobs())})
                 return
             if path == "/api/system/health":
                 services = [{"service": "binc-control-plane", "status": "operational"}]
