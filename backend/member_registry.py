@@ -39,6 +39,16 @@ def list_workspace_members(path: Path, workspace_id: str) -> list[dict]:
     return [member for member in load_members(path) if member["workspace_id"] == workspace_id]
 
 
+def update_member_status(members: list[dict], *, member_id: str, workspace_id: str, status: str, confirm: bool) -> dict:
+    if not confirm:
+        raise PermissionError("alteração de status exige confirmação explícita")
+    if status not in STATUSES:
+        raise ValueError("status de membro inválido")
+    for member in members:
+        if member["member_id"] == member_id and member["workspace_id"] == workspace_id:
+            member["status"] = status
+            return member
+    raise ValueError("membro não encontrado no workspace")
 def create_member(members: list[dict], *, member_id: str, workspace_id: str, role: str, confirm: bool) -> dict:
     if not confirm:
         raise PermissionError("criação de membro exige confirmação explícita")

@@ -27,7 +27,7 @@ from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from message_composer import dispatch_admin_message
 from media_composer import dispatch_admin_media
-from member_registry import create_member, list_workspace_members, load_members, save_members
+from member_registry import create_member, list_workspace_members, load_members, save_members, update_member_status
 from onboarding import onboarding_checklist
 from observability import summarize_health, summarize_metrics
 from project_registry import list_projects
@@ -323,12 +323,24 @@ class Handler(BaseHTTPRequestHandler):
             action_by_path = "create_financial_entry"
         elif parsed.path in {"/api/finance/categories", "/api/finance/accounts", "/api/finance/recurrences"}:
             action_by_path = "manage_onboarding"
-        elif parsed.path == "/api/members":
+        elif parsed.path in {"/api/members", "/api/members/status"}:
             action_by_path = "manage_onboarding"
         elif len(parts) == 4 and parts[:2] == ["api", "jobs"]:
             action_by_path = "manage_jobs"
         if action_by_path and not can_perform_action(CONTROL_PLANE_ROLE, action_by_path):
             self.send_json({"error": "forbidden", "code": "rbac_denied"}, 403)
+            return
+        if parsed.path == "/api/members/status":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                members = load_members(MEMBERS)
+                updated = update_member_status(members, member_id=str(body["member_id"]), workspace_id=str(body["workspace_id"]), status=str(body["status"]), confirm=body.get("confirm") is True)
+                save_members(MEMBERS, members)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="binc-orchestrator", action="update_member_status", result="success", details={"member_id": updated["member_id"], "workspace_id": updated["workspace_id"], "status": updated["status"]})
+                self.send_json({"ok": True, "member": updated})
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/members":
             try:

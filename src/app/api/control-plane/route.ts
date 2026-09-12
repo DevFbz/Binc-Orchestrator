@@ -24,7 +24,7 @@ export async function GET() {
   const baseUrl = process.env.HERMES_CONTROL_PLANE_URL;
   if (!baseUrl) return secureJson({ ok: false, code: "control_plane_not_configured", message: "Configure HERMES_CONTROL_PLANE_URL na Vercel." }, { status: 503 });
   try {
-    const [overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, events] = await Promise.all([
+    const [overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, events, maguMembers, personalMembers] = await Promise.all([
       readJson(baseUrl, "/api/admin/overview"),
       readJson(baseUrl, "/api/tenants"),
       readJson(baseUrl, "/api/campaigns"),
@@ -36,8 +36,10 @@ export async function GET() {
       readJson(baseUrl, "/api/audit/recent"),
       readJson(baseUrl, "/api/onboarding"),
       readJson(baseUrl, "/api/events/telegram?workspace_id=magu-moto-pecas-filho&limit=100"),
+      readJson(baseUrl, "/api/members?workspace_id=magu-moto-pecas-filho"),
+      readJson(baseUrl, "/api/members?workspace_id=personal"),
     ]);
-    return secureJson({ ok: true, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events });
+    return secureJson({ ok: true, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events, members: { magu: maguMembers, personal: personalMembers } });
   } catch (error) {
     return secureJson({ ok: false, code: "control_plane_unavailable", message: error instanceof Error ? error.message : "Falha ao consultar o control plane." }, { status: 502 });
   }
@@ -71,6 +73,15 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ member_id: body.member_id, workspace_id: body.workspace_id, role: body.role, confirm: body.confirm === true }),
+        cache: "no-store",
+      });
+      return secureJson(await response.json(), { status: response.status });
+    }
+    if (body.kind === "member_status") {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/members/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ member_id: body.member_id, workspace_id: body.workspace_id, status: body.status, confirm: body.confirm === true }),
         cache: "no-store",
       });
       return secureJson(await response.json(), { status: response.status });
