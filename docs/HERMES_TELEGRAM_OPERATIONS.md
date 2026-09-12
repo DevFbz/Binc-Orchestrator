@@ -220,3 +220,33 @@ Quando o usuário pedir uma alteração:
 5. rodar testes;
 6. registrar commit;
 7. relatar resultado real.
+
+## Regra obrigatória para retomada de sprints
+
+Quando o usuário disser `continuar a sprint`, `prosseguir`, `retomar o projeto`, `onde paramos` ou equivalente, **não perguntar qual sprint**. Consultar este estado e agir pela próxima tarefa pendente.
+
+Estado atual:
+
+```text
+InstagramAutomationPostHermes:
+- repositório exclusivo de automação Instagram;
+- serviço ativo na VM em 127.0.0.1:8787;
+- pré-revisão Telegram ativa;
+- próxima evolução: manutenção do módulo Instagram ou nova solicitação explícita.
+
+Binc Orchestrator:
+- repositório administrativo separado;
+- dashboard Vercel publicado;
+- control plane separado na porta 8791;
+- jobs, relatórios, onboarding, RBAC, auditoria e health implementados;
+- módulo financeiro com criação confirmada e histórico;
+- próxima prioridade: autenticação web real, categorias/contas/recorrências financeiras e estabilização de produção.
+```
+
+Ao retomar:
+
+1. informar qual sprint/tarefa está sendo retomada;
+2. executar diretamente a próxima tarefa pendente;
+3. não pedir ao usuário para repetir o histórico;
+4. validar testes e deploy antes de declarar conclusão;
+5. manter Instagram e Binc em repositórios separados.
