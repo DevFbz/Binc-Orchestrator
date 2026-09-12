@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Bot, Inbox, MessageSquare, Search, ShieldCheck, UserRound, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import MobileNav from "@/components/MobileNav";
 import styles from "./page.module.css";
 
 type Event = {
@@ -85,5 +86,6 @@ export default function TerminalPage() {
     </section>}
     <section className={styles.composer}><div><p className={styles.kicker}>COMPOSER ADMINISTRATIVO</p><h2>Responder através do Hermes</h2></div><select aria-label="Selecionar conversa" value={selectedConversation} onChange={(event) => setSelectedConversation(event.target.value)}><option value="">Selecione uma conversa</option>{conversations.map((event) => <option key={event.conversation_id} value={event.conversation_id}>{maskReference(event.external_user_ref)} · {event.conversation_id}</option>)}</select><textarea aria-label="Mensagem administrativa" placeholder="Escreva uma resposta operacional…" maxLength={4000} value={messageText} onChange={(event) => setMessageText(event.target.value)} /><label className={styles.filePicker}>Anexar imagem<input aria-label="Anexar imagem" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setSelectedFile(event.target.files?.[0] || null)} /></label>{selectedFile && <small className={styles.fileInfo}>Imagem selecionada: {selectedFile.name} · {Math.round(selectedFile.size / 1024)} KiB</small>}<button className={styles.send} type="button" disabled={!selectedConversation || (!messageText.trim() && !selectedFile) || sendState === "Enviando…"} onClick={sendMessage}>Enviar pelo Hermes</button>{sendState && <p className={styles.sendState}>{sendState}</p>}<small className={styles.composerNote}>O envio exige confirmação e só será marcado como enviado após retorno real do Hermes.</small></section>
     <footer className={styles.footer}>Envio de texto e imagem passa pelo Hermes, com confirmação e auditoria.</footer>
+  <MobileNav />
   </main>;
 }

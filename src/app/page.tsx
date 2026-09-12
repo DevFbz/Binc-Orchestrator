@@ -22,6 +22,7 @@ import {
   WalletCards,
   Workflow,
 } from "lucide-react";
+import MobileNav from "@/components/MobileNav";
 import styles from "./page.module.css";
 
 const projectCatalog = [
@@ -108,6 +109,7 @@ export default function Home() {
         <section className={styles.panel} id="activity"><div className={styles.panelHeader}><div><p className={styles.sectionKicker}>AUDITORIA</p><h2>Atividade recente</h2></div><Link className={styles.textButton} href="/history">Abrir histórico <ArrowUpRight size={13} /></Link></div><div className={styles.activityList}>{activities.map(([tag, title, time, Icon]) => <div className={styles.activity} key={title}><span className={styles.activityDot} /><span className={styles.activityTag}><Icon size={12} /> {tag}</span><strong>{title}</strong><time>{time}</time></div>)}</div></section>
         <footer className={styles.footer}><span><ShieldCheck size={12} /> Hermes Orchestrator <b>v0.1</b></span><span><i /> Todos os sistemas operacionais</span></footer>
       </section>
+      <MobileNav />
     </main>
   );
 }
