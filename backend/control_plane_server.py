@@ -16,7 +16,8 @@ from urllib.request import Request, urlopen
 
 from control_plane_auth import is_authorized
 from finance import summarize_period
-from finance_store import load_entries
+from finance_commands import create_financial_entry
+from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
@@ -156,6 +157,19 @@ class Handler(BaseHTTPRequestHandler):
         expected = os.environ.get("CONTROL_PLANE_TOKEN", "")
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
+            return
+        if self.path.startswith("/api/finance/entries"):
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                occurred_on = date.fromisoformat(str(body["occurred_on"]))
+                entries = load_entries(FINANCE_ENTRIES)
+                entry = create_financial_entry(entries, workspace_id=str(body["workspace_id"]), entry_type=str(body["entry_type"]), amount_cents=int(body["amount_cents"]), category=str(body["category"]), occurred_on=occurred_on, description=str(body["description"]), confirm=body.get("confirm") is True)
+                save_entry(FINANCE_ENTRIES, entry)
+                append_audit(AUDIT_LOG, actor_id=str(body.get("actor_id", "web-admin")), project_id="personal-finance-assistant", action="create_financial_entry", result="success", details={"entry_id": entry["entry_id"], "workspace_id": entry["workspace_id"]})
+                self.send_json({"ok": True, "entry": entry})
+            except (KeyError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if len(parts) != 4 or parts[:2] != ["api", "jobs"] or parts[3] not in {"pause", "resume", "run"}:
             self.send_json({"error": "not_found"}, 404)

@@ -47,10 +47,19 @@ export async function POST(request: Request) {
   const baseUrl = process.env.HERMES_CONTROL_PLANE_URL;
   if (!baseUrl) return NextResponse.json({ ok: false, code: "control_plane_not_configured" }, { status: 503 });
   const body = await request.json().catch(() => ({}));
-  const action = String(body.action || "");
-  const jobId = String(body.job_id || "");
-  if (!jobId || !["pause", "resume", "run"].includes(action)) return NextResponse.json({ ok: false, code: "invalid_job_action" }, { status: 400 });
   try {
+    if (body.kind === "finance_entry") {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/finance/entries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+      return NextResponse.json(await response.json(), { status: response.status });
+    }
+    const action = String(body.action || "");
+    const jobId = String(body.job_id || "");
+    if (!jobId || !["pause", "resume", "run"].includes(action)) return NextResponse.json({ ok: false, code: "invalid_job_action" }, { status: 400 });
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/jobs/${encodeURIComponent(jobId)}/${action}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
