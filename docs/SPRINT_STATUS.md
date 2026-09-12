@@ -22,12 +22,13 @@ Atualizado em 2026-09-12.
 - Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
 - Sprint 15: composer de texto e imagem via `hermes send`, confirmação explícita, idempotência, outbox, armazenamento privado temporário, auditoria e envio real controlado validados.
 - Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
-- Sprint 17 em execução: shell desktop com seleção de seção e conteúdo no mesmo espaço, menu flutuante mobile compartilhado, Roboto, popovers flutuantes, dados live na home e Terminal com composer/timeline; inspeção visual desktop final pendente.
+- Sprint 17: shell desktop, conteúdo por seção, menu mobile, Roboto, popovers, dados live e Terminal chatbot concluídos.
+- Sprint 18 em execução: registro, convite, listagem e ativação/suspensão de membros por workspace; confirmação, RBAC e auditoria implementados.
 
 ## Validações
 
 ```text
-55 testes Python passando no Binc Orchestrator
+63 testes Python passando no Binc Orchestrator
 lint ESLint sem erros
 build Next.js de produção concluído, incluindo a rota `/terminal`
 arquivos Python compilados na VM
@@ -36,15 +37,9 @@ plugin instalado em ~/.hermes/plugins/instagram-approval
 allowlist local criada a partir de TELEGRAM_ALLOWED_USERS sem exibir valores
 ```
 
-## Passo operacional pendente
+## Passo operacional
 
-O plugin foi instalado, mas o gateway precisa ser reiniciado fora do próprio processo do gateway:
-
-```bash
-hermes gateway restart
-```
-
-Isso deve ser executado em uma sessão SSH separada, não por um comando filho do gateway.
+O plugin está instalado e eventos reais já foram persistidos no terminal. O Hermes Gateway deve continuar sendo reiniciado somente por uma sessão SSH externa quando houver alteração de plugin/configuração.
 
 ## Sprint 9 — Estrutura financeira persistente (legado)
 
