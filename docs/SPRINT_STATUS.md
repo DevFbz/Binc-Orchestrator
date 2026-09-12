@@ -19,7 +19,8 @@ Atualizado em 2026-09-12.
 - Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
 - Sprint 13: contrato validado e ingestão idempotente de eventos Telegram do Instagram; adaptador do Hermes criado para emissão assíncrona.
 - Adaptador `deploy/hermes-binc-events` instalado no Hermes; restart separado do gateway pendente para ativar o hook.
-- Sprint 14 em execução: terminal administrativo somente leitura conectado à consulta server-side dos eventos do workspace Instagram.
+- Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
+- Sprint 15 em execução: composer de texto via `hermes send`, confirmação explícita, idempotência, outbox e auditoria; anexos de mídia ainda pendentes.
 - Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
 
 ## Validações
