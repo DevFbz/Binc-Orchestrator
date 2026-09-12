@@ -18,14 +18,18 @@ Atualizado em 2026-09-12.
 - Sprint 11: integração monitorada do Binc com o bridge oficial do CofrinIA.
 - Sprint 12–16 planejadas: confiabilidade do dashboard, eventos, terminal administrativo, composer e hardening.
 - Sprint 13: contrato validado e ingestão idempotente de eventos Telegram do Instagram; adaptador do Hermes criado para emissão assíncrona.
-- Adaptador `deploy/hermes-binc-events` instalado no Hermes; restart separado do gateway pendente para ativar o hook.
-- Sprint 14 em execução: terminal administrativo somente leitura conectado à consulta server-side dos eventos do workspace Instagram.
-- Sprint 17 planejada: responsividade mobile e menu flutuante inferior para navegação.
+- Adaptador `deploy/hermes-binc-events` instalado no Hermes; 10 eventos reais já persistidos e disponíveis no terminal.
+- Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
+- Sprint 15: composer de texto e imagem via `hermes send`, confirmação explícita, idempotência, outbox, armazenamento privado temporário, auditoria e envio real controlado validados.
+- Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
+- Sprint 17: shell desktop, conteúdo por seção, menu mobile, Roboto, popovers, dados live e Terminal chatbot concluídos.
+- Sprint 18: registro, convite, listagem, ativação/suspensão de membros por workspace; confirmação, RBAC, auditoria visual e controle de status dos projetos implementados.
+- Sprint 19 em execução: relatórios CSV/PDF, filtros de período/workspace/projeto, escopo financeiro isolado e contrato de agendas idempotentes; ativação, frequência/destino e entrega pelo Telegram ainda dependem de configuração explícita.
 
 ## Validações
 
 ```text
-42 testes Python passando no Binc Orchestrator
+68 testes Python passando no Binc Orchestrator
 lint ESLint sem erros
 build Next.js de produção concluído, incluindo a rota `/terminal`
 arquivos Python compilados na VM
@@ -34,15 +38,9 @@ plugin instalado em ~/.hermes/plugins/instagram-approval
 allowlist local criada a partir de TELEGRAM_ALLOWED_USERS sem exibir valores
 ```
 
-## Passo operacional pendente
+## Passo operacional
 
-O plugin foi instalado, mas o gateway precisa ser reiniciado fora do próprio processo do gateway:
-
-```bash
-hermes gateway restart
-```
-
-Isso deve ser executado em uma sessão SSH separada, não por um comando filho do gateway.
+O plugin está instalado e eventos reais já foram persistidos no terminal. O Hermes Gateway deve continuar sendo reiniciado somente por uma sessão SSH externa quando houver alteração de plugin/configuração.
 
 ## Sprint 9 — Estrutura financeira persistente (legado)
 

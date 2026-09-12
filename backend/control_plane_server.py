@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import os
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -22,23 +22,36 @@ from finance_setup_store import load_setup, mutate_setup
 from event_store import append_telegram_event, read_recent_events
 from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
+from campaign_matcher import identify_campaigns
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
+from message_composer import dispatch_admin_message
+from media_composer import dispatch_admin_media
+from member_registry import create_member, list_workspace_members, load_members, save_members, update_member_status
 from onboarding import onboarding_checklist
-from observability import summarize_health
-from project_registry import list_projects
-from report_engine import build_overview_report
+from observability import summarize_health, summarize_metrics
+from project_registry import list_projects, save_projects, update_project_status
+from rate_limiter import RateLimiter
+from rbac import can_perform_action
+from report_engine import build_overview_report, scope_finance_summary, scope_report_data
+from report_export import report_to_csv
+from report_pdf import report_to_pdf
 from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
 FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
 TELEGRAM_EVENTS = ROOT / "data" / "events" / "telegram.jsonl"
+MESSAGE_OUTBOX = ROOT / "data" / "outbox" / "telegram-admin.jsonl"
+PRIVATE_MEDIA = ROOT / "data" / "private-media"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
+MEMBERS = ROOT / "data" / "members.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 COFRINIA_BRIDGE_URL = os.environ.get("COFRINIA_BRIDGE_URL", "http://127.0.0.1:8790")
 CONTROL_PLANE_ACTOR = "control-plane-admin"
+CONTROL_PLANE_ROLE = os.environ.get("CONTROL_PLANE_ROLE", "global_admin")
+MUTATION_LIMITER = RateLimiter(limit=30, window_seconds=60)
 
 
 def cofrinia_health_status(base_url: str = COFRINIA_BRIDGE_URL, *, opener=urlopen) -> dict[str, str]:
@@ -65,12 +78,18 @@ def ingest_telegram_event(payload: dict, authorization: str | None, expected_tok
 def route_description(path: str, *, today: date | None = None):
     routes = {
         "/api/projects": "project_registry",
+        "/api/projects/status": "project_registry",
         "/api/jobs": "job_registry",
         "/api/reports/overview": "report_engine",
+        "/api/reports/export": "report_engine",
         "/api/system/health": "observability",
+        "/api/system/metrics": "observability",
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
+        "/api/members": "member_registry",
         "/api/events/telegram": "telegram_events",
+        "/api/terminal/messages": "telegram_admin_send",
+        "/api/terminal/media": "telegram_admin_media",
         "/api/finance/summary": "finance",
         "/api/finance/setup": "finance_setup",
         "/api/finance/categories": "finance_setup",
@@ -172,8 +191,32 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(raw)
+
+    def send_csv(self, body: str, filename: str = "binc-report.csv"):
+        raw = body.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def send_pdf(self, body: bytes, filename: str = "binc-report.pdf"):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -194,6 +237,25 @@ class Handler(BaseHTTPRequestHandler):
                 jobs = list_jobs()
                 self.send_json({"jobs": jobs, "summary": summarize_jobs(jobs)})
                 return
+            if path == "/api/reports/export":
+                today = date.today()
+                start = query.get("start", [today.replace(day=1).isoformat()])[0]
+                end = query.get("end", [today.isoformat()])[0]
+                campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
+                jobs = list_jobs()
+                project_filter = query.get("project_id", [""])[0]
+                finance = scope_finance_summary(finance, project_filter)
+                report_projects, report_campaigns = scope_report_data(list_projects(), campaigns, project_filter)
+                report = build_overview_report(start, end, report_projects, {"summary": summarize_jobs(jobs)}, {"total": len(report_campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in report_campaigns)}, finance)
+                export_format = query.get("format", ["csv"])[0].casefold()
+                if export_format == "pdf":
+                    self.send_pdf(report_to_pdf(report), f"binc-report-{start}-{end}.pdf")
+                elif export_format == "csv":
+                    self.send_csv(report_to_csv(report), f"binc-report-{start}-{end}.csv")
+                else:
+                    self.send_json({"error": "formato de relatório inválido"}, 400)
+                return
             if path == "/api/reports/overview":
                 today = date.today()
                 start = query.get("start", [today.replace(day=1).isoformat()])[0]
@@ -201,8 +263,15 @@ class Handler(BaseHTTPRequestHandler):
                 campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
                 finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
                 jobs = list_jobs()
-                report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
+                project_filter = query.get("project_id", [""])[0]
+                finance = scope_finance_summary(finance, project_filter)
+                report_projects, report_campaigns = scope_report_data(list_projects(), campaigns, project_filter)
+                report = build_overview_report(start, end, report_projects, {"summary": summarize_jobs(jobs)}, {"total": len(report_campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in report_campaigns)}, finance)
                 self.send_json(report)
+                return
+            if path == "/api/system/metrics":
+                events = read_recent_events(TELEGRAM_EVENTS, 500)
+                self.send_json({"metrics": summarize_metrics(events, read_recent(AUDIT_LOG, 200), list_jobs())})
                 return
             if path == "/api/system/health":
                 services = [{"service": "binc-control-plane", "status": "operational"}]
@@ -218,11 +287,24 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/events/telegram":
                 workspace = query.get("workspace_id", [""])[0] or None
                 limit = min(int(query.get("limit", [100])[0]), 500)
-                self.send_json({"events": read_recent_events(TELEGRAM_EVENTS, limit, workspace_id=workspace)})
+                events = read_recent_events(TELEGRAM_EVENTS, limit, workspace_id=workspace)
+                try:
+                    campaigns = _instagram_get("/api/campaigns", self.headers.get("Authorization", "")).get("campaigns", [])
+                    events = [{**event, "campaign_candidates": identify_campaigns(event, campaigns)} for event in events]
+                except Exception:
+                    events = [{**event, "campaign_candidates": []} for event in events]
+                self.send_json({"events": events})
                 return
             if path == "/api/audit/recent":
                 limit = min(int(query.get("limit", [50])[0]), 200)
                 self.send_json({"events": read_recent(AUDIT_LOG, limit)})
+                return
+            if path == "/api/members":
+                workspace = query.get("workspace_id", [""])[0]
+                if not workspace:
+                    self.send_json({"error": "workspace_id obrigatório"}, 400)
+                    return
+                self.send_json({"workspace_id": workspace, "members": list_workspace_members(MEMBERS, workspace)})
                 return
             if path == "/api/onboarding":
                 workspaces = json.loads(WORKSPACES.read_text(encoding="utf-8")).get("workspaces", [])
@@ -262,6 +344,10 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         parts = [part for part in parsed.path.split("/") if part]
         expected = os.environ.get("CONTROL_PLANE_TOKEN", "")
+        client_key = self.client_address[0] if self.client_address else "unknown"
+        if not MUTATION_LIMITER.allow(client_key):
+            self.send_json({"error": "rate_limited", "retry_after_seconds": 60}, 429)
+            return
         if parsed.path == "/api/events/telegram":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -276,6 +362,88 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
+            return
+        action_by_path = ""
+        if parsed.path in {"/api/terminal/messages", "/api/terminal/media"}:
+            action_by_path = "send_telegram"
+        elif parsed.path == "/api/finance/entries":
+            action_by_path = "create_financial_entry"
+        elif parsed.path in {"/api/finance/categories", "/api/finance/accounts", "/api/finance/recurrences"}:
+            action_by_path = "manage_onboarding"
+        elif parsed.path == "/api/projects/status":
+            action_by_path = "manage_onboarding"
+        elif parsed.path in {"/api/members", "/api/members/status"}:
+            action_by_path = "manage_onboarding"
+        elif len(parts) == 4 and parts[:2] == ["api", "jobs"]:
+            action_by_path = "manage_jobs"
+        if action_by_path and not can_perform_action(CONTROL_PLANE_ROLE, action_by_path):
+            self.send_json({"error": "forbidden", "code": "rbac_denied"}, 403)
+            return
+        if parsed.path == "/api/projects/status":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                projects = list_projects()
+                updated = update_project_status(projects, project_id=str(body["project_id"]), status=str(body["status"]), confirm=body.get("confirm") is True)
+                save_projects(ROOT / "data" / "projects.json", projects)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id=updated["project_id"], action="update_project_status", result="success", details={"status": updated["status"]})
+                self.send_json({"ok": True, "project": updated})
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
+        if parsed.path == "/api/members/status":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                members = load_members(MEMBERS)
+                updated = update_member_status(members, member_id=str(body["member_id"]), workspace_id=str(body["workspace_id"]), status=str(body["status"]), confirm=body.get("confirm") is True)
+                save_members(MEMBERS, members)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="binc-orchestrator", action="update_member_status", result="success", details={"member_id": updated["member_id"], "workspace_id": updated["workspace_id"], "status": updated["status"]})
+                self.send_json({"ok": True, "member": updated})
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
+        if parsed.path == "/api/members":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                members = load_members(MEMBERS)
+                member = create_member(members, member_id=str(body["member_id"]), workspace_id=str(body["workspace_id"]), role=str(body["role"]), confirm=body.get("confirm") is True)
+                save_members(MEMBERS, members)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="binc-orchestrator", action="create_member", result="success", details={"member_id": member["member_id"], "workspace_id": member["workspace_id"], "role": member["role"]})
+                self.send_json({"ok": True, "member": member}, 201)
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
+        if parsed.path == "/api/terminal/media":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                events = read_recent_events(TELEGRAM_EVENTS, 500, workspace_id="magu-moto-pecas-filho")
+                result = dispatch_admin_media(body, events, MESSAGE_OUTBOX, PRIVATE_MEDIA)
+                if result["status"] == "sent":
+                    target = next(item for item in events if item.get("conversation_id") == body["conversation_id"])
+                    outbound = {"event_id": f"admin-media-{body['idempotency_key']}", "occurred_at": datetime.now(timezone.utc).isoformat(), "channel": "telegram", "direction": "outbound", "actor_type": "admin_assisted", "workspace_id": target["workspace_id"], "tenant_id": target.get("tenant_id"), "project_id": "instagram-content-operations", "conversation_id": target["conversation_id"], "external_user_ref": target["external_user_ref"], "message_type": "image", "text": body.get("text"), "media_ref": result.get("media_ref"), "campaign_id": target.get("campaign_id"), "intent": None, "delivery_status": "sent", "correlation_id": body["idempotency_key"]}
+                    append_telegram_event(TELEGRAM_EVENTS, outbound)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="instagram-content-operations", action="admin_send_telegram_media", result=result["status"], details={"conversation_id": body.get("conversation_id"), "idempotency_key": body.get("idempotency_key"), "media_ref": result.get("media_ref")})
+                self.send_json(result, 200 if result["status"] == "sent" else 502)
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
+        if parsed.path == "/api/terminal/messages":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                events = read_recent_events(TELEGRAM_EVENTS, 500, workspace_id="magu-moto-pecas-filho")
+                result = dispatch_admin_message(body, events, MESSAGE_OUTBOX)
+                if result["status"] == "sent":
+                    target = next(item for item in events if item.get("conversation_id") == body["conversation_id"])
+                    outbound = {"event_id": f"admin-out-{body['idempotency_key']}", "occurred_at": datetime.now(timezone.utc).isoformat(), "channel": "telegram", "direction": "outbound", "actor_type": "admin_assisted", "workspace_id": target["workspace_id"], "tenant_id": target.get("tenant_id"), "project_id": "instagram-content-operations", "conversation_id": target["conversation_id"], "external_user_ref": target["external_user_ref"], "message_type": "text", "text": body["text"], "media_ref": None, "campaign_id": target.get("campaign_id"), "intent": None, "delivery_status": "sent", "correlation_id": body["idempotency_key"]}
+                    append_telegram_event(TELEGRAM_EVENTS, outbound)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="instagram-content-operations", action="admin_send_telegram", result=result["status"], details={"conversation_id": body.get("conversation_id"), "idempotency_key": body.get("idempotency_key")})
+                self.send_json(result, 200 if result["status"] == "sent" else 502)
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/finance/entries":
             try:

@@ -1,0 +1,16 @@
+{
+  "members": [
+    {
+      "member_id": "admin",
+      "workspace_id": "magu-moto-pecas-filho",
+      "role": "global_admin",
+      "status": "active"
+    },
+    {
+      "member_id": "admin",
+      "workspace_id": "personal",
+      "role": "global_admin",
+      "status": "active"
+    }
+  ]
+}
