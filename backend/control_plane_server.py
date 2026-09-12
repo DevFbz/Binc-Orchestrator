@@ -30,6 +30,7 @@ from media_composer import dispatch_admin_media
 from onboarding import onboarding_checklist
 from observability import summarize_health
 from project_registry import list_projects
+from rate_limiter import RateLimiter
 from report_engine import build_overview_report
 from tenant_registry import list_tenants
 
@@ -44,6 +45,7 @@ WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
 COFRINIA_BRIDGE_URL = os.environ.get("COFRINIA_BRIDGE_URL", "http://127.0.0.1:8790")
 CONTROL_PLANE_ACTOR = "control-plane-admin"
+MUTATION_LIMITER = RateLimiter(limit=30, window_seconds=60)
 
 
 def cofrinia_health_status(base_url: str = COFRINIA_BRIDGE_URL, *, opener=urlopen) -> dict[str, str]:
@@ -179,6 +181,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(raw)
 
@@ -275,6 +280,10 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         parts = [part for part in parsed.path.split("/") if part]
         expected = os.environ.get("CONTROL_PLANE_TOKEN", "")
+        client_key = self.client_address[0] if self.client_address else "unknown"
+        if not MUTATION_LIMITER.allow(client_key):
+            self.send_json({"error": "rate_limited", "retry_after_seconds": 60}, 429)
+            return
         if parsed.path == "/api/events/telegram":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
