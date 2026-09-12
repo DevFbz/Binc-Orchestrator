@@ -35,6 +35,7 @@ from rate_limiter import RateLimiter
 from rbac import can_perform_action
 from report_engine import build_overview_report
 from report_export import report_to_csv
+from report_pdf import report_to_pdf
 from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -207,6 +208,16 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def send_pdf(self, body: bytes, filename: str = "binc-report.pdf"):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/pdf")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -234,7 +245,13 @@ class Handler(BaseHTTPRequestHandler):
                 finance = _finance_summary({"workspace_id": [query.get("workspace_id", ["personal"])[0]], "start": [start], "end": [end]})["summary"]
                 jobs = list_jobs()
                 report = build_overview_report(start, end, list_projects(), {"summary": summarize_jobs(jobs)}, {"total": len(campaigns), "published": sum(item.get("status") == "PUBLISHED" for item in campaigns)}, finance)
-                self.send_csv(report_to_csv(report), f"binc-report-{start}-{end}.csv")
+                export_format = query.get("format", ["csv"])[0].casefold()
+                if export_format == "pdf":
+                    self.send_pdf(report_to_pdf(report), f"binc-report-{start}-{end}.pdf")
+                elif export_format == "csv":
+                    self.send_csv(report_to_csv(report), f"binc-report-{start}-{end}.csv")
+                else:
+                    self.send_json({"error": "formato de relatório inválido"}, 400)
                 return
             if path == "/api/reports/overview":
                 today = date.today()
