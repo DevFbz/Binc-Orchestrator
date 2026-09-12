@@ -49,7 +49,7 @@ Porta local:
 127.0.0.1:8787
 ```
 
-### Binc-Orchestrator
+### Binc Orchestrator
 
 ```text
 https://github.com/DevFbz/Binc-Orchestrator
@@ -85,6 +85,53 @@ Porta local:
 ```text
 127.0.0.1:8791
 ```
+
+### CofrinIA Finance
+
+Repositório oficial:
+
+```text
+https://github.com/DevFbz/CofrinIA---Agente-Financeiro
+```
+
+Projeto financeiro pessoal brasileiro, com assistente no WhatsApp, FastAPI, PostgreSQL, Evolution API, OCR local e transcrição de áudio.
+
+Na VM, o bridge Hermes relacionado está em:
+
+```text
+/home/hermes/apps/cofrinia-hermes-bridge
+```
+
+O repositório completo sincronizado para desenvolvimento remoto ficará em:
+
+```text
+/home/hermes/repos/CofrinIA---Agente-Financeiro
+```
+
+Serviço do bridge:
+
+```text
+cofrinia-hermes-bridge.service
+```
+
+Porta do bridge:
+
+```text
+127.0.0.1:8790
+```
+
+Responsabilidade:
+
+- registro de receitas e despesas via WhatsApp;
+- categorias e formas de pagamento;
+- PostgreSQL;
+- OCR de comprovantes;
+- áudio/Whisper;
+- idempotência;
+- relatórios financeiros;
+- integração futura controlada com Hermes.
+
+Ao receber uma solicitação sobre CofrinIA Finance, trabalhar no repositório oficial e no bridge correspondente. Não confundir esse projeto com o módulo financeiro inicial do Binc Orchestrator.
 
 ## Serviços ativos esperados
 

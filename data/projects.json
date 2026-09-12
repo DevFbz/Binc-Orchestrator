@@ -17,6 +17,17 @@
       "tenant_scope": "private-workspace",
       "service": null,
       "capabilities": ["income", "expenses", "budgets", "cash-flow", "reports"]
+    },
+    {
+      "project_id": "cofrinia-finance",
+      "name": "CofrinIA Finance",
+      "description": "Assistente financeiro brasileiro no WhatsApp com FastAPI, PostgreSQL, Evolution API, OCR e áudio.",
+      "status": "operational",
+      "tenant_scope": "private-workspace",
+      "service": "cofrinia-hermes-bridge.service",
+      "port": 8790,
+      "repository": "https://github.com/DevFbz/CofrinIA---Agente-Financeiro",
+      "capabilities": ["whatsapp", "fastapi", "postgresql", "evolution-api", "ocr", "audio", "finance-bridge", "hermes-integration"]
     }
   ]
 }
