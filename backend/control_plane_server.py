@@ -30,7 +30,7 @@ from media_composer import dispatch_admin_media
 from member_registry import create_member, list_workspace_members, load_members, save_members, update_member_status
 from onboarding import onboarding_checklist
 from observability import summarize_health, summarize_metrics
-from project_registry import list_projects
+from project_registry import list_projects, save_projects, update_project_status
 from rate_limiter import RateLimiter
 from rbac import can_perform_action
 from report_engine import build_overview_report
@@ -76,6 +76,7 @@ def ingest_telegram_event(payload: dict, authorization: str | None, expected_tok
 def route_description(path: str, *, today: date | None = None):
     routes = {
         "/api/projects": "project_registry",
+        "/api/projects/status": "project_registry",
         "/api/jobs": "job_registry",
         "/api/reports/overview": "report_engine",
         "/api/system/health": "observability",
@@ -323,12 +324,26 @@ class Handler(BaseHTTPRequestHandler):
             action_by_path = "create_financial_entry"
         elif parsed.path in {"/api/finance/categories", "/api/finance/accounts", "/api/finance/recurrences"}:
             action_by_path = "manage_onboarding"
+        elif parsed.path == "/api/projects/status":
+            action_by_path = "manage_onboarding"
         elif parsed.path in {"/api/members", "/api/members/status"}:
             action_by_path = "manage_onboarding"
         elif len(parts) == 4 and parts[:2] == ["api", "jobs"]:
             action_by_path = "manage_jobs"
         if action_by_path and not can_perform_action(CONTROL_PLANE_ROLE, action_by_path):
             self.send_json({"error": "forbidden", "code": "rbac_denied"}, 403)
+            return
+        if parsed.path == "/api/projects/status":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                projects = list_projects()
+                updated = update_project_status(projects, project_id=str(body["project_id"]), status=str(body["status"]), confirm=body.get("confirm") is True)
+                save_projects(ROOT / "data" / "projects.json", projects)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id=updated["project_id"], action="update_project_status", result="success", details={"status": updated["status"]})
+                self.send_json({"ok": True, "project": updated})
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/members/status":
             try:

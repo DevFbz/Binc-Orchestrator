@@ -95,6 +95,15 @@ export async function POST(request: Request) {
       });
       return secureJson(await response.json(), { status: response.status });
     }
+    if (body.kind === "project_status") {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/projects/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ project_id: body.project_id, status: body.status, confirm: body.confirm === true }),
+        cache: "no-store",
+      });
+      return secureJson(await response.json(), { status: response.status });
+    }
     const action = String(body.action || "");
     const jobId = String(body.job_id || "");
     if (!jobId || !["pause", "resume", "run"].includes(action)) return secureJson({ ok: false, code: "invalid_job_action" }, { status: 400 });
