@@ -31,6 +31,15 @@ function formatDate(value?: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 }
 
+function fileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function TerminalPage() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState(false);
@@ -39,6 +48,7 @@ export default function TerminalPage() {
   const [selectedConversation, setSelectedConversation] = useState("");
   const [messageText, setMessageText] = useState("");
   const [sendState, setSendState] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       fetch("/api/control-plane", { cache: "no-store" })
@@ -54,13 +64,16 @@ export default function TerminalPage() {
   });
   const conversations = Array.from(new Map(events.filter((event) => event.conversation_id).map((event) => [event.conversation_id, event])).values());
   async function sendMessage() {
-    if (!selectedConversation || !messageText.trim()) return;
-    if (!window.confirm("Confirma o envio desta mensagem através do Hermes?")) return;
+    if (!selectedConversation || (!messageText.trim() && !selectedFile)) return;
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) { setSendState("Imagem maior que 5 MiB."); return; }
+    if (!window.confirm(`Confirma o envio ${selectedFile ? "desta imagem" : "desta mensagem"} através do Hermes?`)) return;
     setSendState("Enviando…");
-    const response = await fetch("/api/control-plane", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "admin_message", conversation_id: selectedConversation, text: messageText, idempotency_key: crypto.randomUUID(), confirm: true }) });
+    const idempotencyKey = crypto.randomUUID();
+    const body = selectedFile ? { kind: "admin_media", conversation_id: selectedConversation, text: messageText, idempotency_key: idempotencyKey, filename: selectedFile.name, mime_type: selectedFile.type, content_base64: await fileAsBase64(selectedFile), confirm: true } : { kind: "admin_message", conversation_id: selectedConversation, text: messageText, idempotency_key: idempotencyKey, confirm: true };
+    const response = await fetch("/api/control-plane", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const payload = await response.json().catch(() => ({}));
-    setSendState(response.ok && payload.status === "sent" ? "Mensagem enviada e auditada." : `Envio não confirmado: ${payload.status || payload.error || "falha"}.`);
-    if (response.ok && payload.status === "sent") { setMessageText(""); window.setTimeout(() => window.location.reload(), 600); }
+    setSendState(response.ok && payload.status === "sent" ? "Enviado e auditado." : `Envio não confirmado: ${payload.status || payload.error || "falha"}.`);
+    if (response.ok && payload.status === "sent") { setMessageText(""); setSelectedFile(null); window.setTimeout(() => window.location.reload(), 600); }
   }
   return <main className={styles.page}>
     <header className={styles.header}><Link href="/" className={styles.back}><ArrowLeft size={16} /> Visão geral</Link><span className={styles.secure}><ShieldCheck size={14} /> Terminal administrativo</span></header>
@@ -70,7 +83,7 @@ export default function TerminalPage() {
     {error ? <div className={styles.notice}><XCircle size={18} /><div><strong>Terminal indisponível</strong><p>O control plane não respondeu. Nenhum dado local foi usado como substituto.</p></div></div> : <section className={styles.list}>
       {filteredEvents.length ? filteredEvents.map((event) => <article className={styles.event} key={event.event_id}><div className={`${styles.avatar} ${event.direction === "outbound" ? styles.bot : styles.user}`}>{event.direction === "outbound" ? <Bot size={16} /> : <UserRound size={16} />}</div><div className={styles.content}><div className={styles.meta}><strong>{event.direction === "outbound" ? "Hermes" : "Usuário"}</strong><span>{formatDate(event.occurred_at)}</span><em>{event.delivery_status ?? "status não informado"}</em></div><p className={styles.text}>{event.text || "Mensagem sem texto"}</p><small>{maskReference(event.external_user_ref)} · {event.campaign_id || event.post_id ? `campanha/post: ${event.campaign_id || event.post_id}` : "campanha/post ainda não identificado"}</small>{event.campaign_candidates?.length ? <div className={styles.candidates}><span>candidatos:</span>{event.campaign_candidates.map((candidate) => <em key={candidate.campaign_id}>{candidate.campaign_id} · {Math.round(candidate.confidence * 100)}%{candidate.selected ? " · recomendado" : ""}</em>)}</div> : null}</div></article>) : <div className={styles.empty}><MessageSquare size={20} /><p>{events.length ? "Nenhum evento corresponde aos filtros atuais." : "Nenhum evento de Telegram disponível para este workspace."}</p></div>}
     </section>}
-    <section className={styles.composer}><div><p className={styles.kicker}>COMPOSER ADMINISTRATIVO</p><h2>Responder através do Hermes</h2></div><select aria-label="Selecionar conversa" value={selectedConversation} onChange={(event) => setSelectedConversation(event.target.value)}><option value="">Selecione uma conversa</option>{conversations.map((event) => <option key={event.conversation_id} value={event.conversation_id}>{maskReference(event.external_user_ref)} · {event.conversation_id}</option>)}</select><textarea aria-label="Mensagem administrativa" placeholder="Escreva uma resposta operacional…" maxLength={4000} value={messageText} onChange={(event) => setMessageText(event.target.value)} /><button className={styles.send} type="button" disabled={!selectedConversation || !messageText.trim() || sendState === "Enviando…"} onClick={sendMessage}>Enviar pelo Hermes</button>{sendState && <p className={styles.sendState}>{sendState}</p>}<small className={styles.composerNote}>O envio exige confirmação e só será marcado como enviado após retorno real do Hermes.</small></section>
-    <footer className={styles.footer}>Anexos pertencem à próxima fatia da Sprint 15 e continuam bloqueados nesta versão.</footer>
+    <section className={styles.composer}><div><p className={styles.kicker}>COMPOSER ADMINISTRATIVO</p><h2>Responder através do Hermes</h2></div><select aria-label="Selecionar conversa" value={selectedConversation} onChange={(event) => setSelectedConversation(event.target.value)}><option value="">Selecione uma conversa</option>{conversations.map((event) => <option key={event.conversation_id} value={event.conversation_id}>{maskReference(event.external_user_ref)} · {event.conversation_id}</option>)}</select><textarea aria-label="Mensagem administrativa" placeholder="Escreva uma resposta operacional…" maxLength={4000} value={messageText} onChange={(event) => setMessageText(event.target.value)} /><label className={styles.filePicker}>Anexar imagem<input aria-label="Anexar imagem" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setSelectedFile(event.target.files?.[0] || null)} /></label>{selectedFile && <small className={styles.fileInfo}>Imagem selecionada: {selectedFile.name} · {Math.round(selectedFile.size / 1024)} KiB</small>}<button className={styles.send} type="button" disabled={!selectedConversation || (!messageText.trim() && !selectedFile) || sendState === "Enviando…"} onClick={sendMessage}>Enviar pelo Hermes</button>{sendState && <p className={styles.sendState}>{sendState}</p>}<small className={styles.composerNote}>O envio exige confirmação e só será marcado como enviado após retorno real do Hermes.</small></section>
+    <footer className={styles.footer}>Envio de texto e imagem passa pelo Hermes, com confirmação e auditoria.</footer>
   </main>;
 }

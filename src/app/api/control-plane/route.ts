@@ -52,6 +52,15 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(await response.json(), { status: response.status });
     }
+    if (body.kind === "admin_media") {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/terminal/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ conversation_id: body.conversation_id, text: body.text, idempotency_key: body.idempotency_key, filename: body.filename, mime_type: body.mime_type, content_base64: body.content_base64, confirm: body.confirm === true }),
+        cache: "no-store",
+      });
+      return NextResponse.json(await response.json(), { status: response.status });
+    }
     const action = String(body.action || "");
     const jobId = String(body.job_id || "");
     if (!jobId || !["pause", "resume", "run"].includes(action)) return NextResponse.json({ ok: false, code: "invalid_job_action" }, { status: 400 });

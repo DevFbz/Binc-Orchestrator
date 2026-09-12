@@ -26,6 +26,7 @@ from campaign_matcher import identify_campaigns
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from message_composer import dispatch_admin_message
+from media_composer import dispatch_admin_media
 from onboarding import onboarding_checklist
 from observability import summarize_health
 from project_registry import list_projects
@@ -37,6 +38,7 @@ FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
 FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
 TELEGRAM_EVENTS = ROOT / "data" / "events" / "telegram.jsonl"
 MESSAGE_OUTBOX = ROOT / "data" / "outbox" / "telegram-admin.jsonl"
+PRIVATE_MEDIA = ROOT / "data" / "private-media"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
@@ -75,6 +77,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/onboarding": "onboarding",
         "/api/events/telegram": "telegram_events",
         "/api/terminal/messages": "telegram_admin_send",
+        "/api/terminal/media": "telegram_admin_media",
         "/api/finance/summary": "finance",
         "/api/finance/setup": "finance_setup",
         "/api/finance/categories": "finance_setup",
@@ -286,6 +289,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
+            return
+        if parsed.path == "/api/terminal/media":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                events = read_recent_events(TELEGRAM_EVENTS, 500, workspace_id="magu-moto-pecas-filho")
+                result = dispatch_admin_media(body, events, MESSAGE_OUTBOX, PRIVATE_MEDIA)
+                if result["status"] == "sent":
+                    target = next(item for item in events if item.get("conversation_id") == body["conversation_id"])
+                    outbound = {"event_id": f"admin-media-{body['idempotency_key']}", "occurred_at": datetime.now(timezone.utc).isoformat(), "channel": "telegram", "direction": "outbound", "actor_type": "admin_assisted", "workspace_id": target["workspace_id"], "tenant_id": target.get("tenant_id"), "project_id": "instagram-content-operations", "conversation_id": target["conversation_id"], "external_user_ref": target["external_user_ref"], "message_type": "image", "text": body.get("text"), "media_ref": result.get("media_ref"), "campaign_id": target.get("campaign_id"), "intent": None, "delivery_status": "sent", "correlation_id": body["idempotency_key"]}
+                    append_telegram_event(TELEGRAM_EVENTS, outbound)
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="instagram-content-operations", action="admin_send_telegram_media", result=result["status"], details={"conversation_id": body.get("conversation_id"), "idempotency_key": body.get("idempotency_key"), "media_ref": result.get("media_ref")})
+                self.send_json(result, 200 if result["status"] == "sent" else 502)
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/terminal/messages":
             try:
