@@ -8,7 +8,7 @@ Este repositório contém a plataforma de administração:
 
 - dashboard Next.js para Vercel;
 - control plane de projetos;
-- módulo financeiro/pessoal;
+- integração com o CofrinIA Finance pelo bridge oficial;
 - proxy autenticado para o projeto Instagram;
 - relatórios, tarefas, jobs e documentação futura.
 
@@ -91,4 +91,4 @@ PYTHONPATH=backend uv run --with pytest pytest tests -q
 
 ## Status
 
-O dashboard Next.js está publicado na Vercel. O control plane Python possui rotas separadas para projetos, finanças e proxy interno do Instagram.
+O dashboard Next.js está publicado na Vercel. O control plane Python cataloga Instagram Content Operations e CofrinIA Finance, monitora jobs e expõe somente integrações administrativas. O domínio financeiro oficial permanece no repositório do CofrinIA.

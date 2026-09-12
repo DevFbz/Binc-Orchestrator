@@ -5,7 +5,7 @@ from job_registry import list_jobs, summarize_jobs
 
 def test_job_registry_groups_jobs_by_project(tmp_path: Path):
     path = tmp_path / "jobs.json"
-    path.write_text('{"jobs": [{"job_id": "j1", "project_id": "instagram-content-operations", "status": "active", "approval_required": true}, {"job_id": "j2", "project_id": "personal-finance-assistant", "status": "paused", "approval_required": false}]}', encoding="utf-8")
+    path.write_text('{"jobs": [{"job_id": "j1", "project_id": "instagram-content-operations", "status": "active", "approval_required": true}, {"job_id": "j2", "project_id": "cofrinia-finance", "status": "paused", "approval_required": false}]}', encoding="utf-8")
 
     jobs = list_jobs(path)
     summary = summarize_jobs(jobs)

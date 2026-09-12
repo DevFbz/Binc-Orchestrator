@@ -1,6 +1,6 @@
 # Status de Sprints — Implementação e Limites Externos
 
-Atualizado em 2026-09-05.
+Atualizado em 2026-09-12.
 
 ## Sprints concluídas no código e na VM
 
@@ -12,11 +12,16 @@ Atualizado em 2026-09-05.
 - Sprint 5: slots por tenant e recomendação de horários por Insights.
 - Sprint 6: pacote Story 9:16 aprovado para publicação manual.
 - Sprint 7: onboarding mínimo, RBAC e log JSONL append-only.
+- Sprint 8: painel de onboarding, governança e autenticação web server-side.
+- Sprint 9: estrutura financeira persistente por workspace (legado, não catalogado como projeto).
+- Sprint 10: unificação do domínio financeiro no CofrinIA Finance.
 
 ## Validações
 
 ```text
-40+ testes locais passando durante a implementação
+34 testes Python passando no Binc Orchestrator
+lint ESLint sem erros
+build Next.js de produção concluído
 arquivos Python compilados na VM
 instagram-studio.service ativo
 plugin instalado em ~/.hermes/plugins/instagram-approval
@@ -32,6 +37,48 @@ hermes gateway restart
 ```
 
 Isso deve ser executado em uma sessão SSH separada, não por um comando filho do gateway.
+
+## Sprint 9 — Estrutura financeira persistente (legado)
+
+Entregue:
+
+- armazenamento JSON atômico para categorias, contas e recorrências;
+- isolamento obrigatório por `workspace_id`;
+- confirmação explícita para toda mutação;
+- prevenção de categorias e contas duplicadas dentro do mesmo workspace;
+- validação de categoria e conta ao criar recorrências;
+- vínculo opcional de conta em lançamentos financeiros;
+- rotas protegidas de leitura e criação no control plane;
+- proxy server-side no Next.js;
+- interface para cadastrar e consultar categorias, contas e recorrências;
+- bloqueio das leituras de configuração e das mutações financeiras no BFF sem sessão `global_admin` válida;
+- auditoria de cada criação.
+
+Critérios verificados:
+
+```text
+GET /api/finance/setup retorna somente o workspace solicitado
+POST de categoria, conta e recorrência exige confirm=true
+recorrência não aceita referências de outro workspace
+campos nulos não são convertidos em textos válidos
+BFF não encaminha configuração ou mutação financeira sem sessão administrativa válida
+smoke test HTTP: 1 categoria, 1 conta, 1 recorrência e 3 eventos de auditoria
+34 testes Python passando
+npm run lint passando
+npm run build passando
+```
+
+Limite desta sprint: recorrências são definições persistidas. A materialização automática não será ampliada no Binc; o domínio oficial deve permanecer no CofrinIA.
+
+## Sprint 10 — CofrinIA como único projeto financeiro
+
+Entregue:
+
+- removido `personal-finance-assistant` do catálogo de projetos;
+- mantido somente `cofrinia-finance` como projeto financeiro;
+- jobs, workspace pessoal e auditoria financeira apontam para `cofrinia-finance`;
+- dashboard exibe o CofrinIA e não oferece o módulo financeiro duplicado como projeto;
+- identificação visual do administrador atualizada para Breno.
 
 ## Dependências externas não falsificadas como concluídas
 

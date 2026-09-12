@@ -17,6 +17,8 @@ from urllib.request import Request, urlopen
 from control_plane_auth import is_authorized
 from finance import summarize_period
 from finance_commands import create_financial_entry
+from finance_setup import create_account, create_category, create_recurrence, scoped_setup
+from finance_setup_store import load_setup, mutate_setup
 from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
 from job_actions import apply_job_action
@@ -29,9 +31,11 @@ from tenant_registry import list_tenants
 
 ROOT = Path(__file__).resolve().parents[1]
 FINANCE_ENTRIES = ROOT / "data" / "finance" / "entries.jsonl"
+FINANCE_SETUP = ROOT / "data" / "finance" / "setup.json"
 AUDIT_LOG = ROOT / "data" / "audit.jsonl"
 WORKSPACES = ROOT / "data" / "workspaces.json"
 INSTAGRAM_URL = os.environ.get("INSTAGRAM_STUDIO_URL", "http://127.0.0.1:8787")
+CONTROL_PLANE_ACTOR = "control-plane-admin"
 
 
 def route_description(path: str, *, today: date | None = None):
@@ -43,6 +47,10 @@ def route_description(path: str, *, today: date | None = None):
         "/api/audit/recent": "audit",
         "/api/onboarding": "onboarding",
         "/api/finance/summary": "finance",
+        "/api/finance/setup": "finance_setup",
+        "/api/finance/categories": "finance_setup",
+        "/api/finance/accounts": "finance_setup",
+        "/api/finance/recurrences": "finance_setup",
         "/api/campaigns": "instagram_proxy",
         "/api/tenants": "tenant_registry",
         "/api/admin/overview": "orchestrator_overview",
@@ -58,6 +66,62 @@ def _finance_summary(query: dict[str, list[str]]) -> dict:
     start = date.fromisoformat(query.get("start", [today.replace(day=1).isoformat()])[0])
     end = date.fromisoformat(query.get("end", [today.isoformat()])[0])
     return {"workspace_id": workspace, "start": start.isoformat(), "end": end.isoformat(), "summary": summarize_period(load_entries(FINANCE_ENTRIES), workspace, start, end)}
+
+
+def apply_finance_setup_mutation(setup: dict, body: dict) -> tuple[str, dict]:
+    try:
+        return _apply_finance_setup_mutation(setup, body)
+    except (KeyError, TypeError):
+        raise ValueError("configuração financeira inválida") from None
+
+
+def _required_string(body: dict, key: str) -> str:
+    value = body[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("configuração financeira inválida")
+    return value.strip()
+
+
+def _required_positive_int(body: dict, key: str) -> int:
+    value = body[key]
+    if type(value) is not int or value <= 0:
+        raise ValueError("configuração financeira inválida")
+    return value
+
+
+def _apply_finance_setup_mutation(setup: dict, body: dict) -> tuple[str, dict]:
+    common = {
+        "workspace_id": _required_string(body, "workspace_id"),
+        "confirm": body.get("confirm") is True,
+    }
+    kind = body.get("kind")
+    if kind == "finance_category":
+        return "category", create_category(
+            setup,
+            **common,
+            name=_required_string(body, "name"),
+            entry_type=_required_string(body, "entry_type"),
+        )
+    if kind == "finance_account":
+        return "account", create_account(
+            setup,
+            **common,
+            name=_required_string(body, "name"),
+            account_type=_required_string(body, "account_type"),
+        )
+    if kind == "finance_recurrence":
+        return "recurrence", create_recurrence(
+            setup,
+            **common,
+            entry_type=_required_string(body, "entry_type"),
+            amount_cents=_required_positive_int(body, "amount_cents"),
+            category_id=_required_string(body, "category_id"),
+            account_id=_required_string(body, "account_id"),
+            frequency=_required_string(body, "frequency"),
+            next_due_on=date.fromisoformat(_required_string(body, "next_due_on")),
+            description=_required_string(body, "description"),
+        )
+    raise ValueError("tipo de configuração financeira inválido")
 
 
 def overview_for_tenants(tenants: list[dict], campaigns: list[dict]) -> dict:
@@ -136,6 +200,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))
                 return
+            if path == "/api/finance/setup":
+                workspace = query.get("workspace_id", ["personal"])[0]
+                self.send_json({"workspace_id": workspace, **scoped_setup(load_setup(FINANCE_SETUP), workspace)})
+                return
             if path == "/api/finance/entries":
                 workspace = query.get("workspace_id", ["personal"])[0]
                 start = query.get("start", [""])[0]
@@ -166,17 +234,53 @@ class Handler(BaseHTTPRequestHandler):
         if not is_authorized(self.headers.get("Authorization"), expected):
             self.send_json({"error": "unauthorized"}, 401)
             return
-        if self.path.startswith("/api/finance/entries"):
+        if parsed.path == "/api/finance/entries":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 body = json.loads(self.rfile.read(length) or b"{}")
                 occurred_on = date.fromisoformat(str(body["occurred_on"]))
                 entries = load_entries(FINANCE_ENTRIES)
-                entry = create_financial_entry(entries, workspace_id=str(body["workspace_id"]), entry_type=str(body["entry_type"]), amount_cents=int(body["amount_cents"]), category=str(body["category"]), occurred_on=occurred_on, description=str(body["description"]), confirm=body.get("confirm") is True)
+                account_id = str(body["account_id"]) if body.get("account_id") else None
+                finance_setup = load_setup(FINANCE_SETUP)
+                entry = create_financial_entry(entries, workspace_id=str(body["workspace_id"]), entry_type=str(body["entry_type"]), amount_cents=int(body["amount_cents"]), category=str(body["category"]), account_id=account_id, accounts=finance_setup["accounts"], occurred_on=occurred_on, description=str(body["description"]), confirm=body.get("confirm") is True)
                 save_entry(FINANCE_ENTRIES, entry)
-                append_audit(AUDIT_LOG, actor_id=str(body.get("actor_id", "web-admin")), project_id="personal-finance-assistant", action="create_financial_entry", result="success", details={"entry_id": entry["entry_id"], "workspace_id": entry["workspace_id"]})
+                append_audit(AUDIT_LOG, actor_id=CONTROL_PLANE_ACTOR, project_id="cofrinia-finance", action="create_financial_entry", result="success", details={"entry_id": entry["entry_id"], "workspace_id": entry["workspace_id"]})
                 self.send_json({"ok": True, "entry": entry})
-            except (KeyError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
+        setup_kind_by_path = {
+            "/api/finance/categories": "finance_category",
+            "/api/finance/accounts": "finance_account",
+            "/api/finance/recurrences": "finance_recurrence",
+        }
+        if parsed.path in setup_kind_by_path:
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                body["kind"] = setup_kind_by_path[parsed.path]
+
+                def audit_setup(result):
+                    audit_entity_type, audit_entity = result
+                    append_audit(
+                        AUDIT_LOG,
+                        actor_id=CONTROL_PLANE_ACTOR,
+                        project_id="cofrinia-finance",
+                        action=f"create_finance_{audit_entity_type}",
+                        result="success",
+                        details={
+                            f"{audit_entity_type}_id": audit_entity[f"{audit_entity_type}_id"],
+                            "workspace_id": audit_entity["workspace_id"],
+                        },
+                    )
+
+                entity_type, entity = mutate_setup(
+                    FINANCE_SETUP,
+                    lambda setup: apply_finance_setup_mutation(setup, body),
+                    after_save=audit_setup,
+                )
+                self.send_json({"ok": True, entity_type: entity})
+            except (KeyError, TypeError, ValueError, PermissionError, json.JSONDecodeError) as exc:
                 self.send_json({"error": str(exc)}, 400)
             return
         if len(parts) != 4 or parts[:2] != ["api", "jobs"] or parts[3] not in {"pause", "resume", "run"}:

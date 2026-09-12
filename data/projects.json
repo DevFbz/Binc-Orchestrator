@@ -10,15 +10,6 @@
       "capabilities": ["campaigns", "telegram-approval", "feed-publishing", "story-package", "insights"]
     },
     {
-      "project_id": "personal-finance-assistant",
-      "name": "Assistente Financeiro/Pessoal",
-      "description": "Organização financeira pessoal, lançamentos, compromissos e relatórios.",
-      "status": "preparation",
-      "tenant_scope": "private-workspace",
-      "service": null,
-      "capabilities": ["income", "expenses", "budgets", "cash-flow", "reports"]
-    },
-    {
       "project_id": "cofrinia-finance",
       "name": "CofrinIA Finance",
       "description": "Assistente financeiro brasileiro no WhatsApp com FastAPI, PostgreSQL, Evolution API, OCR e áudio.",

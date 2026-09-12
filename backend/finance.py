@@ -11,7 +11,7 @@ def _iso(value: date | str) -> str:
     return value.isoformat() if isinstance(value, date) else value
 
 
-def add_entry(entries: list[dict], *, workspace_id: str, entry_type: str, amount_cents: int, category: str, occurred_on: date | str, description: str) -> dict:
+def add_entry(entries: list[dict], *, workspace_id: str, entry_type: str, amount_cents: int, category: str, account_id: str | None = None, occurred_on: date | str, description: str) -> dict:
     if not workspace_id or entry_type not in ENTRY_TYPES or amount_cents <= 0 or not category or not description:
         raise ValueError("lançamento financeiro inválido")
     record = {
@@ -20,6 +20,7 @@ def add_entry(entries: list[dict], *, workspace_id: str, entry_type: str, amount
         "entry_type": entry_type,
         "amount_cents": int(amount_cents),
         "category": category.strip(),
+        "account_id": account_id.strip() if account_id else None,
         "occurred_on": _iso(occurred_on),
         "description": description.strip(),
     }

@@ -65,7 +65,7 @@ Responsabilidade:
 - relatórios;
 - saúde dos serviços;
 - auditoria;
-- módulo financeiro/pessoal;
+- integração com o CofrinIA Finance;
 - control plane.
 
 VM:
@@ -169,24 +169,17 @@ Não parar o Hermes Gateway para executar uma ação de projeto.
 
 Mensagens como `ok`, `pode ir`, emojis ou `manda` não aprovam.
 
-## Fluxo financeiro
+## Integração financeira
 
-Workspace atual:
+Projeto oficial: `cofrinia-finance`.
 
 ```text
-personal
+https://github.com/DevFbz/CofrinIA---Agente-Financeiro
+/home/hermes/apps/cofrinia-hermes-bridge
+127.0.0.1:8790
 ```
 
-Toda movimentação deve ter:
-
-- tipo `income` ou `expense`;
-- valor em centavos;
-- categoria;
-- data;
-- descrição;
-- workspace_id.
-
-Nunca criar lançamento sem confirmação explícita do usuário.
+O Binc Orchestrator apenas cataloga, monitora e integra o CofrinIA. O domínio financeiro não deve ser duplicado no Binc. Movimentações continuam exigindo confirmação explícita no fluxo oficial do CofrinIA.
 
 ## Control plane
 
@@ -201,15 +194,12 @@ GET /api/reports/overview
 GET /api/system/health
 GET /api/audit/recent
 GET /api/onboarding
-GET /api/finance/summary
-GET /api/finance/entries
 POST /api/jobs/{job_id}/pause
 POST /api/jobs/{job_id}/resume
 POST /api/jobs/{job_id}/run
-POST /api/finance/entries
 ```
 
-O token do control plane é server-side e nunca deve ser respondido ao usuário.
+O token do control plane é server-side e nunca deve ser respondido ao usuário. O dashboard usa o BFF apenas para integrações administrativas; o domínio financeiro e o `actor_id` permanecem sob responsabilidade do CofrinIA.
 
 ## Jobs atuais
 
@@ -220,7 +210,7 @@ O token do control plane é server-side e nunca deve ser respondido ao usuário.
 ## Workspaces atuais
 
 - `magu-moto-pecas-filho`: onboarding completo para Instagram.
-- `personal`: módulo financeiro, integração ainda pendente.
+- `personal`: workspace privado do CofrinIA Finance, com bridge em configuração.
 
 Magú Moto Peças Filho é apenas o primeiro tenant. Nunca transformar sua marca em regra global.
 
@@ -235,12 +225,13 @@ Magú Moto Peças Filho é apenas o primeiro tenant. Nunca transformar sua marca
 - Sprint 6: relatórios.
 - Sprint 7: observabilidade e auditoria.
 - Sprint 8: onboarding e RBAC.
+- Sprint 9: categorias, contas e recorrências financeiras persistentes por workspace.
 
 ## Próximas prioridades
 
 1. Ativar autenticação web com `BINC_AUTH_ENABLED=true` após o administrador definir credenciais server-side.
-2. Configurar integração financeira do workspace `personal`.
-3. Persistir categorias, contas e recorrências financeiras.
+2. Configurar integrações externas do workspace financeiro `personal`.
+3. Materializar lançamentos recorrentes de forma idempotente e auditada.
 4. Criar relatórios exportáveis.
 5. Substituir Quick Tunnel por Cloudflare Tunnel nomeado ou domínio próprio.
 6. Continuar operando e validando tudo pelo Telegram.
@@ -286,8 +277,8 @@ Binc Orchestrator:
 - dashboard Vercel publicado;
 - control plane separado na porta 8791;
 - jobs, relatórios, onboarding, RBAC, auditoria e health implementados;
-- módulo financeiro com criação confirmada e histórico;
-- próxima prioridade: autenticação web real, categorias/contas/recorrências financeiras e estabilização de produção.
+- integração com CofrinIA Finance pelo bridge oficial;
+- próxima prioridade: configurar o bridge e validar a integração sem duplicar o domínio financeiro.
 ```
 
 Ao retomar:

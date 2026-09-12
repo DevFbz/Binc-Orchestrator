@@ -11,10 +11,10 @@
     },
     {
       "workspace_id": "personal",
-      "name": "Workspace Pessoal",
+      "name": "Workspace Pessoal — CofrinIA Finance",
       "owner_id": "admin",
-      "projects": ["personal-finance-assistant"],
-      "integrations": [],
+      "projects": ["cofrinia-finance"],
+      "integrations": ["cofrinia-hermes-bridge"],
       "members": ["admin"],
       "approval_policy": "confirmation_required"
     }

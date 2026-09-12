@@ -36,9 +36,9 @@ Responsabilidades:
 - histórico de campanhas;
 - métricas e Insights.
 
-### Projeto B — Assistente Financeiro/Pessoal
+### Projeto B — CofrinIA Finance
 
-Responsabilidades previstas:
+O domínio financeiro oficial fica no repositório independente do CofrinIA Finance:
 
 - registro de receitas e despesas;
 - categorias e centros de custo;
@@ -48,9 +48,9 @@ Responsabilidades previstas:
 - metas financeiras;
 - relatórios periódicos;
 - alertas e lembretes;
-- consultas pelo Telegram.
+- consultas pelo WhatsApp e integração controlada com o Hermes.
 
-O Projeto B deve possuir seu próprio tenant/módulo de domínio, banco lógico, regras e histórico. Ele não deve compartilhar dados com o módulo Instagram, exceto por relatórios globais explicitamente autorizados.
+O Binc Orchestrator apenas cataloga, monitora e integra o CofrinIA pelo bridge oficial. Não deve manter um segundo módulo financeiro/pessoal com o mesmo domínio.
 
 ## 3. Princípios de arquitetura
 
@@ -630,7 +630,7 @@ Construir uma plataforma de produtividade e operação, inspirada na organizaç�
 
 PROJETOS INICIAIS
 1. Instagram Content Operations: catálogo, campanhas, legendas, prompts, aprovação Telegram, Feed Instagram, pacote Story, calendário, histórico e Insights.
-2. Assistente Financeiro/Pessoal: receitas, despesas, contas, categorias, recorrências, orçamento, fluxo de caixa, metas, alertas e relatórios.
+2. CofrinIA Finance: domínio financeiro oficial, operado no repositório próprio e integrado pelo bridge Hermes.
 
 REGRA FUNDAMENTAL
 Magú Moto Peças Filho é apenas o primeiro cliente/tenant do módulo Instagram. Nunca trate essa marca, catálogo, token, calendário ou regras como globais. A plataforma deve aceitar muitos clientes e projetos independentes.

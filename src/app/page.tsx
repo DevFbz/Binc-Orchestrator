@@ -25,7 +25,7 @@ import styles from "./page.module.css";
 
 const projectCatalog = [
   { id: "instagram-content-operations", color: "green", icon: Camera },
-  { id: "personal-finance-assistant", color: "amber", icon: WalletCards },
+  { id: "cofrinia-finance", color: "amber", icon: WalletCards },
 ];
 
 type Project = { project_id: string; name: string; description?: string; status: string; capabilities?: string[] };
@@ -80,14 +80,14 @@ export default function Home() {
           <a className={styles.navItem} href="/onboarding"><ShieldCheck size={16} /> Governança</a>
           <p className={styles.navLabel}>MÓDULOS</p>
           <a className={styles.navItem} href="#instagram"><Camera size={16} /> Instagram</a>
-          <a className={styles.navItem} href="/finance"><CircleDollarSign size={16} /> Finanças</a>
+          <a className={styles.navItem} href="https://github.com/DevFbz/CofrinIA---Agente-Financeiro" target="_blank" rel="noreferrer"><CircleDollarSign size={16} /> CofrinIA Finance</a>
           <a className={styles.navItem} href="/reports"><FileText size={16} /> Relatórios</a>
           <a className={styles.navItem} href="#docs"><FileText size={16} /> Documentação</a>
         </nav>
-        <div className={styles.sidebarFooter}><div className={styles.avatar}>F</div><div><strong>Administrador</strong><small>Global admin</small></div><MoreHorizontal size={16} /></div>
+        <div className={styles.sidebarFooter}><div className={styles.avatar}>B</div><div><strong>Administrador</strong><small>Global admin</small></div><MoreHorizontal size={16} /></div>
       </aside>
       <section className={styles.content} id="overview">
-        <header className={styles.header}><div><p className={styles.eyebrow} suppressHydrationWarning>{currentDate}</p><h1>Bom dia, Fábio <span><Sparkles size={20} /></span></h1><p className={styles.subtitle}>Aqui está o resumo da sua operação.</p></div><div className={styles.headerActions}><button className={styles.iconButton} aria-label="Buscar"><Search size={17} /></button><button className={styles.iconButton} aria-label="Notificações"><Activity size={17} /></button><button className={styles.profile}>F</button></div></header>
+        <header className={styles.header}><div><p className={styles.eyebrow} suppressHydrationWarning>{currentDate}</p><h1>Bom dia, Breno <span><Sparkles size={20} /></span></h1><p className={styles.subtitle}>Aqui está o resumo da sua operação.</p></div><div className={styles.headerActions}><button className={styles.iconButton} aria-label="Buscar"><Search size={17} /></button><button className={styles.iconButton} aria-label="Notificações"><Activity size={17} /></button><button className={styles.profile}>B</button></div></header>
         <div className={styles.banner}><div className={styles.bannerIcon}><Bot size={20} /></div><div><strong>Hermes está monitorando sua operação</strong><p>{connectionText}</p></div><span className={`${styles.live} ${controlPlane !== "connected" ? styles.liveWarning : ""}`}><i /> {controlPlane === "connected" ? "LIVE" : "ATENÇÃO"}</span></div>
         <section className={styles.kpis}><article><small>PROJETOS ATIVOS</small><strong>{remoteData ? (totals?.tenants ?? projects.length) : "—"}</strong><span className={styles.positive}>Dados do control plane</span></article><article><small>CAMPANHAS</small><strong>{remoteData ? (totals?.campaigns ?? 0) : "—"}</strong><span>Histórico sincronizado</span></article><article><small>PUBLICAÇÕES</small><strong>{remoteData ? (totals?.published ?? 0) : "—"}</strong><span>Aprovadas e registradas</span></article><article><small>CONEXÃO</small><strong>{controlPlane === "connected" ? "OK" : "—"}</strong><span className={controlPlane === "connected" ? styles.positive : styles.warning}>{controlPlane === "connected" ? "Control plane online" : "Configuração pendente"}</span></article></section>
         <div className={styles.grid}>

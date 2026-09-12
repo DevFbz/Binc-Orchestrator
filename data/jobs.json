@@ -21,11 +21,11 @@
     },
     {
       "job_id": "financial-reporting",
-      "project_id": "personal-finance-assistant",
+      "project_id": "cofrinia-finance",
       "name": "Relatório financeiro mensal",
       "status": "paused",
       "schedule": "monthly",
-      "next_action": "aguarda lançamentos e configuração",
+      "next_action": "aguarda integração do CofrinIA",
       "approval_required": true
     }
   ]
