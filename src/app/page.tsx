@@ -34,6 +34,14 @@ type ControlPlaneData = { overview?: { totals?: { tenants?: number; campaigns?: 
 
 const statusLabel: Record<string, string> = { operational: "Operacional", preparation: "Em preparação", degraded: "Atenção", offline: "Offline" };
 
+function getGreeting() {
+  const hour = Number(new Intl.DateTimeFormat("pt-BR", { hour: "numeric", hourCycle: "h23", timeZone: "America/Sao_Paulo" }).format(new Date()));
+  if (hour >= 5 && hour < 12) return "Bom dia";
+  if (hour >= 12 && hour < 18) return "Boa tarde";
+  if (hour >= 0 && hour < 5) return "Boa madrugada";
+  return "Boa noite";
+}
+
 const activities = [
   ["Instagram", "Campanha de produto publicada", "Hoje, 14:20", Camera],
   ["Agenda", "Pré-revisão configurada para 18:30", "Hoje, 14:24", CalendarClock],
@@ -89,13 +97,13 @@ export default function Home() {
           <Link className={styles.navItem} href="/projects?project=instagram-content-operations"><Camera size={16} /> Instagram</Link>
           <Link className={styles.navItem} href="/terminal"><Bot size={16} /> Terminal Telegram</Link>
           <a className={styles.navItem} href="https://github.com/DevFbz/CofrinIA---Agente-Financeiro" target="_blank" rel="noreferrer"><CircleDollarSign size={16} /> CofrinIA Finance</a>
-          <a className={styles.navItem} href="/reports"><FileText size={16} /> Relatórios</a>
+          <Link className={styles.navItem} href="/reports"><FileText size={16} /> Relatórios</Link>
           <a className={styles.navItem} href="/docs"><FileText size={16} /> Documentação</a>
         </nav>
         <div className={styles.sidebarFooter}><div className={styles.avatar}>B</div><div><strong>Administrador</strong><small>Global admin</small></div><MoreHorizontal size={16} /></div>
       </aside>
       <section className={styles.content} id="overview">
-        <header className={styles.header}><div><p className={styles.eyebrow} suppressHydrationWarning>{currentDate}</p><h1>Bom dia, Breno <span><Sparkles size={20} /></span></h1><p className={styles.subtitle}>Aqui está o resumo da sua operação.</p></div><div className={styles.headerActions}><button className={styles.iconButton} aria-label="Buscar" aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}><Search size={17} /></button><button className={styles.iconButton} aria-label="Notificações" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Activity size={17} /></button><button className={styles.profile} aria-label="Perfil do administrador" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>B</button></div></header>
+        <header className={styles.header}><div><p className={styles.eyebrow} suppressHydrationWarning>{currentDate}</p><h1 suppressHydrationWarning>{getGreeting()}, Breno <span><Sparkles size={20} /></span></h1><p className={styles.subtitle}>Aqui está o resumo da sua operação.</p></div><div className={styles.headerActions}><button className={styles.iconButton} aria-label="Buscar" aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}><Search size={17} /></button><button className={styles.iconButton} aria-label="Notificações" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Activity size={17} /></button><button className={styles.profile} aria-label="Perfil do administrador" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>B</button></div></header>
         {searchOpen && <div className={styles.headerPopover}><Search size={15} /><input autoFocus value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Buscar projetos" aria-label="Buscar projetos" /><button onClick={() => { setSearchTerm(""); setSearchOpen(false); }}>Fechar</button></div>}
         {notificationsOpen && <div className={styles.headerPopover}><Activity size={15} /><div><strong>Notificações</strong><p>Nenhuma notificação nova.</p></div></div>}
         {profileOpen && <div className={styles.headerPopover}><div className={styles.avatar}>B</div><div><strong>Breno</strong><p>Administrador global</p></div><Link href="/onboarding">Governança</Link></div>}
