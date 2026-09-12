@@ -136,6 +136,14 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/finance/summary":
                 self.send_json(_finance_summary(query))
                 return
+            if path == "/api/finance/entries":
+                workspace = query.get("workspace_id", ["personal"])[0]
+                start = query.get("start", [""])[0]
+                end = query.get("end", [""])[0]
+                limit = min(int(query.get("limit", [50])[0]), 200)
+                entries = [item for item in load_entries(FINANCE_ENTRIES) if item.get("workspace_id") == workspace and (not start or item.get("occurred_on", "") >= start) and (not end or item.get("occurred_on", "") <= end)]
+                self.send_json({"workspace_id": workspace, "entries": list(reversed(entries[-limit:]))})
+                return
             if path == "/api/tenants":
                 self.send_json({"tenants": list_tenants()})
                 return
