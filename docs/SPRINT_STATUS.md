@@ -22,7 +22,7 @@ Atualizado em 2026-09-12.
 - Sprint 14: terminal administrativo somente leitura com eventos reais, busca, filtros e candidatos de campanha sem seleção automática ambígua.
 - Sprint 15: composer de texto e imagem via `hermes send`, confirmação explícita, idempotência, outbox, armazenamento privado temporário, auditoria e envio real controlado validados.
 - Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
-- Sprint 17 em execução: menu flutuante mobile compartilhado no dashboard, Jobs, Governança, Relatórios e Terminal; safe-area, foco e rolagem horizontal implementados.
+- Sprint 17 em execução: menu flutuante mobile compartilhado no dashboard, Projetos, detalhe de Projeto, Jobs, Governança, Relatórios, Histórico, Documentação e Terminal; safe-area, foco e rolagem horizontal implementados; inspeção visual final em viewport mobile pendente.
 
 ## Validações
 
