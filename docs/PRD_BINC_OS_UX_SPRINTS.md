@@ -219,48 +219,48 @@ O dashboard deve exibi-lo no catálogo de Projetos, com status real. Não criar 
 
 ### Navegação
 
-- [ ] opção selecionada fica ativa no desktop;
-- [ ] conteúdo selecionado substitui Visão geral no shell;
-- [ ] Tarefas, Jobs, Projetos, Governança, Relatórios, Documentação e Terminal têm destinos funcionais;
-- [ ] refresh em rota canônica mantém a seção;
-- [ ] menu mobile continua funcional.
+- [x] opção selecionada fica ativa no desktop;
+- [x] conteúdo selecionado substitui Visão geral no shell;
+- [x] Tarefas, Jobs, Projetos, Governança, Relatórios, Documentação e Terminal têm destinos funcionais;
+- [x] refresh em rota canônica mantém a seção;
+- [x] menu mobile continua funcional.
 
 ### Dados
 
-- [ ] zero atividade fictícia na Visão geral;
-- [ ] próximas automações derivadas de jobs reais;
-- [ ] pausa/resume refletida no dashboard após leitura do control plane;
-- [ ] CofrinIA aparece como `operational`;
-- [ ] health dos três serviços é consultado;
-- [ ] estados indisponível/vazio são explícitos.
+- [x] zero atividade fictícia na Visão geral;
+- [x] próximas automações derivadas de jobs reais;
+- [x] pausa/resume refletida no dashboard após leitura do control plane;
+- [x] CofrinIA aparece como `operational`;
+- [x] health dos três serviços é consultado;
+- [x] estados indisponível/vazio são explícitos.
 
 ### Popovers
 
-- [ ] busca abre flutuante;
-- [ ] notificações abrem flutuante;
-- [ ] perfil abre flutuante;
-- [ ] Escape fecha;
-- [ ] clique externo fecha;
-- [ ] foco e ARIA funcionam.
+- [x] busca abre flutuante;
+- [x] notificações abrem flutuante;
+- [x] perfil abre flutuante;
+- [x] Escape fecha;
+- [x] clique externo fecha;
+- [x] foco e ARIA funcionam.
 
 ### Terminal
 
-- [ ] timeline tem rolagem própria;
-- [ ] composer fica visível sem rolar a página inteira;
-- [ ] mensagem de texto exige confirmação;
-- [ ] imagem valida MIME, assinatura e tamanho;
-- [ ] resultado real é exibido sem falso sucesso;
-- [ ] auditoria é registrada.
+- [x] timeline tem rolagem própria;
+- [x] composer fica visível sem rolar a página inteira;
+- [x] mensagem de texto exige confirmação;
+- [x] imagem valida MIME, assinatura e tamanho;
+- [x] resultado real é exibido sem falso sucesso;
+- [x] auditoria é registrada.
 
 ### Qualidade
 
-- [ ] Roboto aplicado com fallback;
-- [ ] `npm run lint` sem erros ou warnings novos relevantes;
-- [ ] build de produção aprovado;
-- [ ] smoke HTTP das rotas;
-- [ ] testes Python completos;
-- [ ] nenhum segredo no código, logs ou Git;
-- [ ] inspeção visual desktop e mobile realizada.
+- [x] Roboto aplicado com fallback;
+- [x] `npm run lint` sem erros ou warnings novos relevantes;
+- [x] build de produção aprovado;
+- [x] smoke HTTP das rotas;
+- [x] testes Python completos;
+- [x] nenhum segredo no código, logs ou Git;
+- [ ] inspeção pixel-perfect desktop nativa — bloqueada por autorização de remote debugging; DOM, preview embutido e build foram verificados.
 
 ## 9. Sprints desta fase
 

@@ -21,6 +21,11 @@ async function currentRole() {
   return readSession((await cookies()).get(SESSION_COOKIE)?.value)?.role || null;
 }
 
+function permissionsFor(role: string | null) {
+  const elevated = role === "global_admin" || role === "workspace_admin";
+  return { can_read: Boolean(role), can_send_telegram: elevated, can_manage_members: elevated, can_manage_projects: elevated, can_manage_jobs: elevated, can_create_financial_entry: elevated };
+}
+
 async function readJson(baseUrl: string, path: string) {
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}${path}`, { headers: authHeaders(), cache: "no-store" });
   if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
@@ -48,7 +53,7 @@ export async function GET() {
       readJson(baseUrl, "/api/members?workspace_id=magu-moto-pecas-filho"),
       readJson(baseUrl, "/api/members?workspace_id=personal"),
     ]);
-    return secureJson({ ok: true, role, permissions: { can_read: true, can_send_telegram: role === "global_admin" || role === "workspace_admin", can_manage_members: role === "global_admin" || role === "workspace_admin", can_manage_jobs: role === "global_admin" || role === "workspace_admin", can_create_financial_entry: role === "global_admin" || role === "workspace_admin" }, overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events, members: { magu: maguMembers, personal: personalMembers } });
+    return secureJson({ ok: true, role, permissions: permissionsFor(role), overview, tenants, campaigns, projects, jobs, report, health, metrics, audit, onboarding, telegramEvents: events, members: { magu: maguMembers, personal: personalMembers } });
   } catch (error) {
     return secureJson({ ok: false, code: "control_plane_unavailable", message: error instanceof Error ? error.message : "Falha ao consultar o control plane." }, { status: 502 });
   }
@@ -58,8 +63,12 @@ export async function POST(request: Request) {
   const baseUrl = process.env.HERMES_CONTROL_PLANE_URL;
   if (!baseUrl) return secureJson({ ok: false, code: "control_plane_not_configured" }, { status: 503 });
   const body = await request.json().catch(() => ({}));
+  const role = await currentRole();
+  if (authEnabled() && !role) return secureJson({ ok: false, code: "unauthorized" }, { status: 401 });
+  const permissions = permissionsFor(role);
   try {
     if (body.kind === "admin_message") {
+      if (!permissions.can_send_telegram) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/terminal/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -69,6 +78,7 @@ export async function POST(request: Request) {
       return secureJson(await response.json(), { status: response.status });
     }
     if (body.kind === "admin_media") {
+      if (!permissions.can_send_telegram) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/terminal/media`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -78,6 +88,7 @@ export async function POST(request: Request) {
       return secureJson(await response.json(), { status: response.status });
     }
     if (body.kind === "member_create") {
+      if (!permissions.can_manage_members) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -87,6 +98,7 @@ export async function POST(request: Request) {
       return secureJson(await response.json(), { status: response.status });
     }
     if (body.kind === "member_status") {
+      if (!permissions.can_manage_members) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/members/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -96,6 +108,7 @@ export async function POST(request: Request) {
       return secureJson(await response.json(), { status: response.status });
     }
     if (body.kind === "project_status") {
+      if (!permissions.can_manage_projects) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/projects/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -107,6 +120,7 @@ export async function POST(request: Request) {
     const action = String(body.action || "");
     const jobId = String(body.job_id || "");
     if (!jobId || !["pause", "resume", "run"].includes(action)) return secureJson({ ok: false, code: "invalid_job_action" }, { status: 400 });
+    if (!permissions.can_manage_jobs) return secureJson({ ok: false, code: "forbidden" }, { status: 403 });
     const response = await fetch(`${baseUrl.replace(/\/$/, "")}/api/jobs/${encodeURIComponent(jobId)}/${action}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },

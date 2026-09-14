@@ -1,17 +1,22 @@
+"use client";
+
 import Link from "next/link";
-import { Bot, FileText, FolderKanban, LayoutDashboard, ShieldCheck, Workflow } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { NAV_ITEMS } from "./navigation";
 import styles from "./MobileNav.module.css";
 
-const items = [
-  ["/", "Início", LayoutDashboard],
-  ["/projects", "Projetos", FolderKanban],
-
-  ["/jobs", "Jobs", Workflow],
-  ["/onboarding", "Governança", ShieldCheck],
-  ["/terminal", "Terminal", Bot],
-  ["/reports", "Relatórios", FileText],
-] as const;
-
 export default function MobileNav() {
-  return <nav className={styles.nav} aria-label="Navegação mobile">{items.map(([href, label, Icon]) => <Link href={href} key={href}><Icon size={16} /><span>{label}</span></Link>)}</nav>;
+  const pathname = usePathname();
+  const [hash, setHash] = useState("");
+  useEffect(() => {
+    const update = () => setHash(window.location.hash.replace("#", ""));
+    update();
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, []);
+  const active = pathname === "/" ? hash || "overview" : NAV_ITEMS.find((item) => item.route === pathname)?.id;
+  return <nav className={styles.nav} aria-label="Navegação principal">
+    {NAV_ITEMS.map((item) => { const Icon = item.icon; return <Link href={item.href} key={item.id} aria-current={active === item.id ? "page" : undefined}><Icon size={16} /><span>{item.label}</span></Link>; })}
+  </nav>;
 }
