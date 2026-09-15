@@ -14,7 +14,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   function toggleSidebar() { setSidebarCollapsed((value) => { const next = !value; window.localStorage.setItem("binc.sidebar.collapsed", String(next)); return next; }); }
   return <div className={`${styles.shell} ${sidebarCollapsed ? styles.collapsed : ""}`}>
     <aside className={styles.sidebar} aria-label="Navegação principal">
-      <div className={styles.brandRow}><Link className={styles.brand} href="/"><span>B</span><strong>Binc OS</strong></Link><button className={styles.collapseButton} type="button" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}>{sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button></div>
+      <div className={styles.brandRow}>
+        <Link className={styles.brand} href="/"><span>B</span><strong>Binc OS</strong></Link>
+        <button className={styles.collapseButton} type="button" onClick={toggleSidebar} aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"} title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}>
+          {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          <span>{sidebarCollapsed ? "Expandir menu" : "Recolher menu"}</span>
+        </button>
+      </div>
       <div className={styles.scope}><small>CONTROL PLANE</small><strong>Minha operação</strong><span>Estado verificado pelo Binc</span></div>
       <nav className={styles.nav}>{(["primary", "more"] as const).map((group) => <div className={styles.navGroup} key={group}><p className={styles.navLabel}>{NAV_GROUP_LABELS[group]}</p>{NAV_ITEMS.filter((item) => item.group === group).map((item) => { const Icon = item.icon; const active = isActiveRoute(pathname, item.href); return <Link href={item.href} key={item.id} aria-current={active ? "page" : undefined} title={sidebarCollapsed ? item.label : undefined}><Icon size={17} /><span>{item.label}</span></Link>; })}</div>)}</nav>
       <div className={styles.footer}><span className={styles.avatar}>B</span><div><strong>Administrador</strong><small>Controle global</small></div><MoreHorizontal size={17} /></div>
