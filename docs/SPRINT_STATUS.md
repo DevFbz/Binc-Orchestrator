@@ -24,7 +24,7 @@ Atualizado em 2026-09-12.
 - Sprint 16: hardening e operação concluídos com rate limit, headers de segurança, métricas, runbook, smoke test público, E2E da VM, threat model e RBAC server-side; rollback documentado e não executado em produção por ausência de incidente.
 - Sprint 17: shell desktop, conteúdo por seção, menu mobile, Roboto, popovers, dados live e Terminal chatbot concluídos.
 - Sprint 18: registro, convite, listagem, ativação/suspensão de membros por workspace; confirmação, RBAC, auditoria visual e controle de status dos projetos implementados.
-- Checkup de paridade web/mobile: navegação compartilhada, sidebar sticky, ReportPanel, GovernancePanel, TerminalPanel, ações inline de Jobs/Projetos, proxy.ts e BFF RBAC implementados.
+- Checkup de paridade e redesign web/mobile: navegação compartilhada, sidebar fixa e retrátil, AppShell global, menu mobile compacto, ReportPanel, GovernancePanel, TerminalPanel, Projetos com Abrir, Campanhas no detalhe do Instagram e BFF RBAC implementados.
 - Sprint 19 em execução: relatórios CSV/PDF, filtros de período/workspace/projeto, escopo financeiro isolado e contrato de agendas idempotentes; ativação, frequência/destino e entrega pelo Telegram ainda dependem de configuração explícita.
 
 ## Validações

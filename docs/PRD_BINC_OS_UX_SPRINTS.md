@@ -8,13 +8,13 @@
 
 ## 1. Objetivo
 
-Transformar o dashboard do Binc em um shell operacional real: a opção selecionada na navegação desktop deve permanecer ativa e substituir o conteúdo da Visão geral no mesmo espaço; os dados exibidos devem vir do control plane; a interface deve usar Binc OS, Roboto e uma composição de Monitor/Operate sem elementos decorativos que pareçam funcionalidades inexistentes.
+Transformar o dashboard do Binc em um shell operacional real, simples e responsivo: Projetos abre detalhes por rota, Campanhas pertence ao projeto Instagram, Automações concentra jobs e o menu lateral permanece fixo e retrátil; os dados exibidos devem vir do control plane e a interface deve usar Binc OS, Nunito Sans/Varela Round e uma composição de Monitor/Operate sem elementos decorativos que pareçam funcionalidades inexistentes.
 
 A experiência mobile já possui o menu inferior e deve ser preservada. Esta fase corrige principalmente desktop/tablet e o Terminal Telegram.
 
 ## 2. Problemas confirmados
 
-1. A navegação lateral desktop usa âncoras ou rotas que levam para páginas separadas em vez de trocar o conteúdo no shell.
+1. A navegação desktop e mobile possuem histórico de implementações diferentes; o contrato atual deve manter rotas simples e shell global compartilhado.
 2. O dashboard possui `activities` e `automation` estáticos, que podem exibir ações nunca realizadas.
 3. O estado do job de pré-revisão não é refletido nas automações exibidas.
 4. O catálogo do dashboard precisa tratar o CofrinIA como projeto operacional ativo.
@@ -22,26 +22,28 @@ A experiência mobile já possui o menu inferior e deve ser preservada. Esta fas
 6. Instagram e CofrinIA não devem aparecer novamente como “Módulos” quando já são projetos no catálogo.
 7. Busca, notificações e perfil devem abrir popovers flutuantes reais, com posicionamento, foco, fechamento e estados vazios.
 8. O Terminal Telegram precisa ter composição de chatbot: timeline rolável, composer fixo/estável e seleção de conversa sem obrigar o usuário a rolar toda a página.
-9. A tipografia atual deve migrar para Roboto com fallback seguro.
+9. A tipografia arredondada do painel deve usar Nunito Sans/Varela Round com fallback seguro.
 10. Rotas e controles sem comportamento devem possuir destino, handler ou estado desabilitado explicado.
 
 ## 3. Escopo
 
 ### Incluído
 
-- shell desktop persistente do Binc OS;
-- navegação com estado ativo;
-- conteúdo por seção no mesmo shell;
-- Visão geral, Projetos, Tarefas, Automações, Governança, Relatórios, Documentação, Terminal;
+- shell desktop persistente e retrátil do Binc OS;
+- navegação com estado ativo e rotas simples;
+- Projetos com ação Abrir e detalhes por rota;
+- Campanhas somente no detalhe do Instagram;
+- Automações como única seção de jobs e agenda;
+- Visão geral, Projetos, Automações, Governança, Relatórios, Documentação, Terminal;
 - dados reais de projetos, jobs, health, auditoria e eventos;
 - remoção de atividades fictícias;
 - automações derivadas dos jobs reais;
 - catálogo com CofrinIA `operational`;
 - remoção de Instagram/CofrinIA da seção duplicada de módulos;
 - popovers flutuantes de busca, notificações e perfil;
-- Roboto;
+- Nunito Sans/Varela Round;
 - Terminal com layout de chatbot e composer acessível;
-- menu mobile existente preservado;
+- menu mobile compacto com área Mais;
 - testes de contrato, navegação, estados e smoke test;
 - documentação e critérios de aceite.
 

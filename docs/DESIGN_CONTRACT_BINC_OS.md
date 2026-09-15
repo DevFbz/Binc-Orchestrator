@@ -32,7 +32,8 @@ Ações administrativas de ativar/desativar ficam no detalhe e exigem confirmaç
 
 ## Shell
 
-- sidebar persistente e viewport-height no desktop;
+- sidebar fixa e viewport-height no desktop;
+- sidebar pode ser recolhida e expandida, com preferência persistida localmente;
 - conteúdo independente pode rolar sem mover a sidebar;
 - bottom navigation compacta no mobile com no máximo cinco destinos visíveis;
 - destinos secundários entram em `Mais`;
@@ -42,7 +43,7 @@ Ações administrativas de ativar/desativar ficam no detalhe e exigem confirmaç
 ## Visual
 
 - fundo escuro neutro e superfícies planas;
-- Roboto para UI;
+- Nunito Sans para UI e Varela Round para títulos;
 - DM Mono somente para IDs, estados e metadados;
 - Lucide para ícones funcionais;
 - um acento laranja e cores semânticas de sucesso/atenção/erro;

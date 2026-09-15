@@ -8,7 +8,7 @@ def test_shell_owns_persistent_desktop_navigation():
     layout = (ROOT / "src" / "app" / "layout.tsx").read_text(encoding="utf-8")
     shell = (ROOT / "src" / "components" / "AppShell.module.css").read_text(encoding="utf-8")
     assert "AppShell" in layout
-    assert "position:sticky" in shell
+    assert "position:fixed" in shell
     assert "height:100dvh" in shell
 
 

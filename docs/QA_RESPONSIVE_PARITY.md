@@ -27,7 +27,8 @@ Isso permitia que uma atualização feita no mobile não chegasse ao shell deskt
 - mobile passou a ter os oito destinos principais;
 - estado ativo mobile usa `aria-current="page"`;
 - links mobile usam o mesmo shell/hash do desktop;
-- sidebar web usa `position: sticky`, `top: 0`, `height: 100dvh` e rolagem interna;
+- sidebar web é `position: fixed`, `top: 0`, `height: 100dvh`, com largura dinâmica e menu retrátil;
+- preferência de sidebar recolhida é persistida localmente;
 - arquivos de páginas diretas retornam ao shell Binc OS.
 
 ### Conteúdo compartilhado
@@ -51,7 +52,7 @@ Isso permitia que uma atualização feita no mobile não chegasse ao shell deskt
 
 - `middleware.ts` foi migrado para `proxy.ts` conforme a convenção do Next.js 16;
 - `outputFileTracingRoot` foi definido no `next.config.ts`;
-- referências residuais a Manrope foram substituídas por Roboto.
+- referências residuais a Roboto foram substituídas por Nunito Sans/Varela Round;
 
 ## Matriz de paridade
 
