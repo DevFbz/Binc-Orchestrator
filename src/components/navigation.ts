@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { id: "docs", label: "Documentação", icon: Settings2, href: "/docs", group: "more" },
 ] as const;
 
+export const NAV_GROUP_LABELS = { primary: "OPERAÇÃO", more: "ACESSO" } as const;
 export const MOBILE_PRIMARY_ITEMS = NAV_ITEMS.filter((item) => item.group === "primary");
 export const MOBILE_MORE_ITEMS = NAV_ITEMS.filter((item) => item.group === "more");
 export type NavigationId = (typeof NAV_ITEMS)[number]["id"];
