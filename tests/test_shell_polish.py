@@ -13,7 +13,7 @@ def test_sidebar_is_fixed_and_collapsible():
     assert "collapsed" in css
 
 
-def test_panel_uses_rounded_ui_font():
-    globals_css = (ROOT / "src" / "app" / "globals.css").read_text(encoding="utf-8")
-    assert "Nunito Sans" in globals_css
-    assert "Roboto" not in globals_css
+def test_collapsed_sidebar_does_not_scroll_as_a_second_page():
+    css = (ROOT / "src" / "components" / "AppShell.module.css").read_text(encoding="utf-8")
+    assert "overflow:hidden" in css
+    assert ".collapsed .scope{display:none}" in css
