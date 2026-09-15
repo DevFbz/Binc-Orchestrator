@@ -6,6 +6,7 @@ import MobileNav from "@/components/MobileNav";
 import styles from "./page.module.css";
 
 const documents = [
+  ["Contrato visual Binc OS", "DESIGN_CONTRACT_BINC_OS.md", "Regra de navegação, responsividade, tipografia e estados operacionais."],
   ["PRD do terminal administrativo", "PRD_ADMIN_TERMINAL.md", "Escopo do terminal, contrato de eventos e Sprints 12–17."],
   ["Auditoria do dashboard", "QA_DASHBOARD_AUDIT.md", "Achados funcionais e critérios para corrigir botões e navegação."],
   ["PRD do Hermes Orchestrator", "PRD_HERMES_ORCHESTRATOR.md", "Arquitetura, fronteiras entre projetos e definição de pronto."],

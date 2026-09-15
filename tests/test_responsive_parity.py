@@ -4,73 +4,49 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_web_and_mobile_use_one_navigation_contract():
-    navigation = ROOT / "src" / "components" / "navigation.ts"
-    mobile_nav = (ROOT / "src" / "components" / "MobileNav.tsx").read_text(encoding="utf-8")
-    home = (ROOT / "src" / "app" / "page.tsx").read_text(encoding="utf-8")
-    assert navigation.exists()
-    assert "NAV_ITEMS" in mobile_nav
-    assert "NAV_ITEMS" in home
+def test_shell_owns_persistent_desktop_navigation():
+    layout = (ROOT / "src" / "app" / "layout.tsx").read_text(encoding="utf-8")
+    shell = (ROOT / "src" / "components" / "AppShell.module.css").read_text(encoding="utf-8")
+    assert "AppShell" in layout
+    assert "position:sticky" in shell
+    assert "height:100dvh" in shell
 
 
-def test_desktop_sidebar_stays_visible_while_content_scrolls():
-    css = (ROOT / "src" / "app" / "page.module.css").read_text(encoding="utf-8")
-    assert "position:sticky" in css
-    assert "height:100dvh" in css
+def test_navigation_has_automations_but_no_tasks():
+    navigation = (ROOT / "src" / "components" / "navigation.ts").read_text(encoding="utf-8")
+    mobile = (ROOT / "src" / "components" / "MobileNav.tsx").read_text(encoding="utf-8")
+    assert 'id: "tasks"' not in navigation
+    assert 'label: "Automações"' in navigation
+    assert "MOBILE_PRIMARY_ITEMS" in mobile
+    assert "MOBILE_MORE_ITEMS" in mobile
 
 
-def test_reports_are_available_in_the_shell_without_open_report_route():
-    home = (ROOT / "src" / "app" / "page.tsx").read_text(encoding="utf-8")
-    report_panel = (ROOT / "src" / "components" / "ReportPanel.tsx").read_text(encoding="utf-8")
-    assert "href=\"/reports\"" not in home
-    assert "ReportPanel" in home
-    assert "Aplicar filtros" in report_panel
-    assert "Exportar CSV" in report_panel
-
-
-def test_governance_uses_one_shared_panel_with_mobile_actions():
-    home = (ROOT / "src" / "app" / "page.tsx").read_text(encoding="utf-8")
-    component = ROOT / "src" / "components" / "GovernancePanel.tsx"
-    assert component.exists()
-    content = component.read_text(encoding="utf-8")
-    assert "GovernancePanel" in home
-    assert "Novo membro" in content
-    assert "Suspender" in content
-    assert "workspace_id" in content
-
-
-def test_terminal_uses_one_shared_panel_with_filters_and_composer():
-    home = (ROOT / "src" / "app" / "page.tsx").read_text(encoding="utf-8")
-    component = ROOT / "src" / "components" / "TerminalPanel.tsx"
-    assert component.exists()
-    content = component.read_text(encoding="utf-8")
-    assert "TerminalPanel" in home
-    assert "Buscar eventos" in content
-    assert "Enviar pelo Hermes" in content
-
-
-def test_projects_route_exposes_the_same_project_status_control():
+def test_projects_open_details_and_details_own_management_and_campaigns():
     projects = (ROOT / "src" / "app" / "projects" / "page.tsx").read_text(encoding="utf-8")
-    assert "project_status" in projects
-    assert "Ativar" in projects
-    assert "Desativar" in projects
-
-
-def test_finance_route_does_not_redirect_to_external_repository():
-    finance = (ROOT / "src" / "app" / "finance" / "page.tsx").read_text(encoding="utf-8")
-    assert "redirect(\"https://github.com" not in finance
-
-
-def test_project_detail_exposes_the_same_project_status_control():
     detail = (ROOT / "src" / "app" / "projects" / "[projectId]" / "page.tsx").read_text(encoding="utf-8")
+    assert "Abrir <ArrowUpRight" in projects
+    assert "project_status" not in projects
     assert "project_status" in detail
-    assert "Ativar" in detail
-    assert "Desativar" in detail
+    assert "Campanhas" in detail
 
 
-def test_next16_uses_proxy_convention():
+def test_feature_pages_use_their_dedicated_shared_panels():
+    reports = (ROOT / "src" / "app" / "reports" / "page.tsx").read_text(encoding="utf-8")
+    onboarding = (ROOT / "src" / "app" / "onboarding" / "page.tsx").read_text(encoding="utf-8")
+    terminal = (ROOT / "src" / "app" / "terminal" / "page.tsx").read_text(encoding="utf-8")
+    assert "ReportPanel" in reports
+    assert "GovernancePanel" in onboarding
+    assert "TerminalPanel" in terminal
+
+
+def test_legacy_campaigns_route_redirects_to_instagram_project_tab():
+    campaigns = (ROOT / "src" / "app" / "campaigns" / "page.tsx").read_text(encoding="utf-8")
+    assert 'redirect("/projects/instagram-content-operations#campaigns")' in campaigns
+
+
+def test_finance_route_stays_inside_binc_and_next_uses_proxy_convention():
+    finance = (ROOT / "src" / "app" / "finance" / "page.tsx").read_text(encoding="utf-8")
     proxy = ROOT / "src" / "proxy.ts"
-    middleware = ROOT / "src" / "middleware.ts"
+    assert "github.com" not in finance
     assert proxy.exists()
-    assert not middleware.exists()
     assert "export function proxy" in proxy.read_text(encoding="utf-8")

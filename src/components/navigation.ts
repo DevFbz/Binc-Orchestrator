@@ -1,16 +1,20 @@
-import { Activity, Bot, Camera, FileText, FolderKanban, LayoutDashboard, ListChecks, ShieldCheck, WalletCards, Workflow } from "lucide-react";
+import { Bot, FileText, FolderKanban, LayoutDashboard, Settings2, ShieldCheck, Workflow } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { id: "overview", label: "Visão geral", icon: LayoutDashboard, href: "/", route: "/" },
-  { id: "projects", label: "Projetos", icon: FolderKanban, href: "/#projects", route: "/projects" },
-  { id: "tasks", label: "Tarefas", icon: ListChecks, href: "/#tasks", route: "/jobs" },
-  { id: "automations", label: "Automações", icon: Workflow, href: "/#automations", route: "/jobs" },
-  { id: "governance", label: "Governança", icon: ShieldCheck, href: "/#governance", route: "/onboarding" },
-  { id: "reports", label: "Relatórios", icon: FileText, href: "/#reports", route: "/reports" },
-  { id: "docs", label: "Documentação", icon: FileText, href: "/#docs", route: "/docs" },
-  { id: "terminal", label: "Terminal Telegram", icon: Bot, href: "/#terminal", route: "/terminal" },
+  { id: "overview", label: "Visão geral", icon: LayoutDashboard, href: "/", group: "primary" },
+  { id: "projects", label: "Projetos", icon: FolderKanban, href: "/projects", group: "primary" },
+  { id: "automations", label: "Automações", icon: Workflow, href: "/jobs", group: "primary" },
+  { id: "reports", label: "Relatórios", icon: FileText, href: "/reports", group: "primary" },
+  { id: "governance", label: "Governança", icon: ShieldCheck, href: "/onboarding", group: "more" },
+  { id: "terminal", label: "Terminal", icon: Bot, href: "/terminal", group: "more" },
+  { id: "docs", label: "Documentação", icon: Settings2, href: "/docs", group: "more" },
 ] as const;
 
-export type NavigationSection = (typeof NAV_ITEMS)[number]["id"];
+export const MOBILE_PRIMARY_ITEMS = NAV_ITEMS.filter((item) => item.group === "primary");
+export const MOBILE_MORE_ITEMS = NAV_ITEMS.filter((item) => item.group === "more");
+export type NavigationId = (typeof NAV_ITEMS)[number]["id"];
 
-export const projectIcons = { instagram: Camera, finance: WalletCards, activity: Activity };
+export function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
