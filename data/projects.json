@@ -19,6 +19,18 @@
       "port": 8790,
       "repository": "https://github.com/DevFbz/CofrinIA---Agente-Financeiro",
       "capabilities": ["whatsapp", "fastapi", "postgresql", "evolution-api", "ocr", "audio", "finance-bridge", "hermes-integration"]
+    },
+    {
+      "project_id": "binc-erp",
+      "name": "Binc ERP",
+      "description": "ERP para estoque, vendas, clientes, trocas, relatórios, Binc IA e integração WhatsApp.",
+      "status": "preparation",
+      "tenant_scope": "multi-tenant",
+      "service": "binc-erp-api",
+      "repository": "https://github.com/DevFbz/binc-atualizado",
+      "source_revision": "7334cd49cc7825abeed7b09d8f3361241de1c34e",
+      "integration_state": "repository_only",
+      "capabilities": ["inventory", "sales", "customers", "returns", "reports", "binc-ia", "whatsapp", "security_review_required"]
     }
   ]
 }

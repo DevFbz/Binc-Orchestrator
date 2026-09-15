@@ -9,7 +9,7 @@ import styles from "./page.module.css";
 type Project = { project_id: string; name: string; description?: string; status: string; capabilities?: string[]; service?: string };
 type Data = { projects?: { projects?: Project[] } };
 
-const statusLabel: Record<string, string> = { operational: "Operacional", disabled: "Desativado", degraded: "Atenção" };
+const statusLabel: Record<string, string> = { operational: "Operacional", disabled: "Desativado", degraded: "Atenção", preparation: "Em preparação" };
 
 export default function ProjectsPage() {
   const [data, setData] = useState<Data | null>(null);
