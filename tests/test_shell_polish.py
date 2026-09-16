@@ -13,7 +13,7 @@ def test_sidebar_is_fixed_and_collapsible():
     assert "collapsed" in css
     assert "<span>{sidebarCollapsed ? \"Expandir menu\" : \"Recolher menu\"}</span>" in shell
     assert ".brandRow{display:grid" in css
-    assert ".collapsed .collapseButton{right:-18px}" in css
+    assert ".collapsed .collapseButton{position:static" in css
     assert "position:absolute;top:20px;right:12px" not in css
 
 
