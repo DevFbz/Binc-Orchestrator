@@ -11,7 +11,8 @@ def test_production_sidebar_uses_blue_dark_reference_structure():
     assert "--sidebar-width:250px" in css
     assert "position:fixed" in css
     assert ".sidebar::after" in css
-    assert ".collapseButton{position:absolute" in css
+    assert ".collapseButton{position:fixed" in css
+    assert "left:calc(var(--sidebar-width) - 20px);top:48px" in css
     assert "border-radius:50%" in css
     assert "linear-gradient(180deg,#111820 0%,#18232D 100%)" in css
     assert "background:#18232D" in css

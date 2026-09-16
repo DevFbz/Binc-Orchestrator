@@ -13,7 +13,7 @@ def test_sidebar_is_fixed_and_collapsible():
     assert "collapsed" in css
     assert "<span>{sidebarCollapsed ? \"Expandir menu\" : \"Recolher menu\"}</span>" in shell
     assert ".brandRow{display:grid" in css
-    assert ".collapseButton{position:absolute" in css
+    assert ".collapseButton{position:fixed" in css
 
 
 def test_collapsed_sidebar_does_not_scroll_as_a_second_page():
