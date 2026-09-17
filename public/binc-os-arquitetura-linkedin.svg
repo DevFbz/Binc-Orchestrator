@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Binc OS — Arquitetura do Orquestrador Multi-Projeto</title>
+  <desc id="desc">Diagrama da arquitetura do Binc OS como control plane de três projetos: Instagram Content Operations, CofrinIA Finance e Binc ERP.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111f"/><stop offset="1" stop-color="#0b1728"/></linearGradient>
+    <linearGradient id="binc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#123c55"/><stop offset="1" stop-color="#0d273a"/></linearGradient>
+    <linearGradient id="instagram" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#42233e"/><stop offset="1" stop-color="#281a34"/></linearGradient>
+    <linearGradient id="finance" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#183f3c"/><stop offset="1" stop-color="#122d32"/></linearGradient>
+    <linearGradient id="erp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a3520"/><stop offset="1" stop-color="#302417"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#2a4057" stroke-opacity=".28" stroke-width="1"/></pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000" flood-opacity=".35"/></filter>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#49d8ff"/></marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#59dfac"/></marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9cb0c4"/></marker>
+    <style>
+      .font{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#eef6ff}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.title{font-size:30px;font-weight:750;letter-spacing:-.7px}.subtitle{font-size:14px;fill:#9db0c3}.label{font-size:12px;font-weight:700;letter-spacing:1.2px}.small{font-size:12px;fill:#a9bdd0}.tiny{font-size:10px;fill:#8fa5ba}.nodeTitle{font-size:18px;font-weight:720}.nodeSub{font-size:12px;fill:#b3c6d8}.nodeText{font-size:12px;fill:#d3e0ed}.chip{font-size:11px;font-weight:650}.line{fill:none;stroke-linecap:round;stroke-linejoin:round}.dash{stroke-dasharray:7 7}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect x="28" y="28" width="1544" height="944" rx="28" fill="url(#grid)" opacity=".75"/>
+  <rect x="28" y="28" width="1544" height="944" rx="28" fill="none" stroke="#314a63" stroke-width="1.5"/>
+
+  <g class="font">
+    <circle cx="78" cy="78" r="7" fill="#59dfac" filter="url(#glow)"/><text x="100" y="86" class="title">Binc OS</text><text x="232" y="85" class="title" fill="#49d8ff">/ ORCHESTRATOR</text>
+    <text x="78" y="116" class="subtitle">Control plane multi-projeto para operar, monitorar e governar três domínios independentes.</text>
+    <text x="1520" y="78" text-anchor="end" class="mono tiny">ARCHITECTURE • v1.0</text>
+    <text x="1520" y="100" text-anchor="end" class="mono tiny">STATE / SOURCE / ACTION</text>
+
+    <!-- external operator layer -->
+    <rect x="78" y="156" width="1444" height="98" rx="16" fill="#0d1b2b" stroke="#3a566f"/>
+    <text x="104" y="184" class="label" fill="#49d8ff">OPERAÇÃO E ENTRADA</text>
+    <text x="104" y="208" class="small">Operadores, Hermes e integrações externas.</text>
+    <g filter="url(#shadow)">
+      <rect x="470" y="174" width="190" height="58" rx="10" fill="#172a3c" stroke="#9cb0c4"/>
+      <rect x="705" y="174" width="190" height="58" rx="10" fill="#172a3c" stroke="#9cb0c4"/>
+      <rect x="940" y="174" width="190" height="58" rx="10" fill="#172a3c" stroke="#9cb0c4"/>
+    </g>
+    <text x="565" y="199" text-anchor="middle" class="nodeTitle">Binc OS Web</text><text x="565" y="219" text-anchor="middle" class="nodeSub">dashboard operacional</text>
+    <text x="800" y="199" text-anchor="middle" class="nodeTitle">Hermes Gateway</text><text x="800" y="219" text-anchor="middle" class="nodeSub">Telegram / terminal admin</text>
+    <text x="1035" y="199" text-anchor="middle" class="nodeTitle">Integrações</text><text x="1035" y="219" text-anchor="middle" class="nodeSub">webhooks e serviços</text>
+
+    <!-- arrows top -->
+    <path d="M565 232V292" class="line" stroke="#49d8ff" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+    <path d="M800 232V292" class="line" stroke="#49d8ff" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+    <path d="M1035 232V292" class="line" stroke="#49d8ff" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+
+    <!-- central control plane -->
+    <rect x="270" y="288" width="1060" height="302" rx="22" fill="#081522" stroke="#49d8ff" stroke-opacity=".75" stroke-width="2" stroke-dasharray="10 7"/>
+    <rect x="296" y="310" width="390" height="104" rx="14" fill="url(#binc)" stroke="#49d8ff" stroke-width="2" filter="url(#shadow)"/>
+    <text x="324" y="347" class="label" fill="#49d8ff">CORE CONTROL PLANE</text><text x="324" y="377" class="nodeTitle">Binc Orchestrator API</text><text x="324" y="399" class="nodeSub">sessão • RBAC • escopo • contratos server-side</text>
+    <rect x="712" y="310" width="270" height="104" rx="14" fill="#112539" stroke="#59dfac" stroke-width="1.5"/>
+    <text x="738" y="345" class="nodeTitle">Project Registry</text><text x="738" y="368" class="nodeSub">3 projetos • status real</text><text x="738" y="390" class="nodeSub">workspace_id • tenant_id • project_id</text>
+    <rect x="1008" y="310" width="296" height="104" rx="14" fill="#112539" stroke="#59dfac" stroke-width="1.5"/>
+    <text x="1034" y="345" class="nodeTitle">Health + Job Registry</text><text x="1034" y="368" class="nodeSub">jobs • saúde • agendas</text><text x="1034" y="390" class="nodeSub">estado operacional verificável</text>
+    <path d="M686 362H712" class="line" stroke="#59dfac" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <path d="M982 362H1008" class="line" stroke="#59dfac" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+    <rect x="296" y="452" width="306" height="104" rx="14" fill="#172839" stroke="#f7b955" stroke-width="1.5"/>
+    <text x="322" y="487" class="nodeTitle">Adapters &amp; BFF</text><text x="322" y="510" class="nodeSub">proxy autenticado por projeto</text><text x="322" y="532" class="nodeSub">nenhum token no navegador</text>
+    <rect x="626" y="452" width="306" height="104" rx="14" fill="#172839" stroke="#ff8f75" stroke-width="1.5"/>
+    <text x="652" y="487" class="nodeTitle">Audit &amp; Event Store</text><text x="652" y="510" class="nodeSub">append-only • idempotência</text><text x="652" y="532" class="nodeSub">evidência de cada mutação</text>
+    <rect x="956" y="452" width="348" height="104" rx="14" fill="#172839" stroke="#b89aff" stroke-width="1.5"/>
+    <text x="982" y="487" class="nodeTitle">Reports &amp; Governance</text><text x="982" y="510" class="nodeSub">relatórios • permissões • revisão</text><text x="982" y="532" class="nodeSub">confirmar → executar → ler de volta</text>
+    <path d="M450 414V452" class="line" stroke="#f7b955" stroke-width="2" marker-end="url(#arrow-muted)"/><path d="M779 414V452" class="line" stroke="#ff8f75" stroke-width="2" marker-end="url(#arrow-muted)"/><path d="M1156 414V452" class="line" stroke="#b89aff" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <!-- project layer -->
+    <text x="78" y="642" class="label" fill="#9cb0c4">PROJETOS ORQUESTRADOS / ISOLAMENTO POR DOMÍNIO</text>
+    <path d="M450 590V662" class="line dash" stroke="#f7b955" stroke-width="2" marker-end="url(#arrow-muted)"/><path d="M800 590V662" class="line dash" stroke="#f7b955" stroke-width="2" marker-end="url(#arrow-muted)"/><path d="M1150 590V662" class="line dash" stroke="#f7b955" stroke-width="2" marker-end="url(#arrow-muted)"/>
+
+    <g filter="url(#shadow)">
+      <rect x="78" y="668" width="444" height="224" rx="18" fill="url(#instagram)" stroke="#ec72c2" stroke-width="2"/>
+      <rect x="578" y="668" width="444" height="224" rx="18" fill="url(#finance)" stroke="#59dfac" stroke-width="2"/>
+      <rect x="1078" y="668" width="444" height="224" rx="18" fill="url(#erp)" stroke="#f7b955" stroke-width="2"/>
+    </g>
+    <text x="108" y="708" class="label" fill="#ec72c2">PROJECT 01</text><text x="108" y="744" class="nodeTitle">Instagram Content Operations</text><text x="108" y="770" class="nodeSub">campanhas • calendário • aprovação Telegram</text>
+    <rect x="108" y="796" width="118" height="28" rx="14" fill="#612950" stroke="#ec72c2"/><text x="167" y="815" text-anchor="middle" class="chip">Instagram</text><rect x="236" y="796" width="104" height="28" rx="14" fill="#612950" stroke="#ec72c2"/><text x="288" y="815" text-anchor="middle" class="chip">Azure Blob</text><rect x="350" y="796" width="124" height="28" rx="14" fill="#612950" stroke="#ec72c2"/><text x="412" y="815" text-anchor="middle" class="chip">Insights</text>
+    <text x="108" y="858" class="tiny">tenant • mídia • publicação • métricas</text>
+
+    <text x="608" y="708" class="label" fill="#59dfac">PROJECT 02</text><text x="608" y="744" class="nodeTitle">CofrinIA Finance</text><text x="608" y="770" class="nodeSub">domínio financeiro privado e bridge oficial</text>
+    <rect x="608" y="796" width="116" height="28" rx="14" fill="#1e554d" stroke="#59dfac"/><text x="666" y="815" text-anchor="middle" class="chip">Finance API</text><rect x="734" y="796" width="120" height="28" rx="14" fill="#1e554d" stroke="#59dfac"/><text x="794" y="815" text-anchor="middle" class="chip">PostgreSQL</text><rect x="864" y="796" width="128" height="28" rx="14" fill="#1e554d" stroke="#59dfac"/><text x="928" y="815" text-anchor="middle" class="chip">Bridge</text>
+    <text x="608" y="858" class="tiny">entradas • categorias • relatórios • isolamento</text>
+
+    <text x="1108" y="708" class="label" fill="#f7b955">PROJECT 03</text><text x="1108" y="744" class="nodeTitle">Binc ERP</text><text x="1108" y="770" class="nodeSub">estoque • vendas • clientes • operação</text>
+    <rect x="1108" y="796" width="116" height="28" rx="14" fill="#6b4b1e" stroke="#f7b955"/><text x="1166" y="815" text-anchor="middle" class="chip">ERP API</text><rect x="1234" y="796" width="126" height="28" rx="14" fill="#6b4b1e" stroke="#f7b955"/><text x="1297" y="815" text-anchor="middle" class="chip">Banco próprio</text><rect x="1370" y="796" width="122" height="28" rx="14" fill="#6b4b1e" stroke="#f7b955"/><text x="1431" y="815" text-anchor="middle" class="chip">Binc IA</text>
+    <text x="1108" y="858" class="tiny">contrato server-side • RBAC • sem duplicação de dados</text>
+
+    <!-- bottom legend -->
+    <line x1="78" y1="930" x2="1522" y2="930" stroke="#294158"/>
+    <circle cx="94" cy="953" r="5" fill="#49d8ff"/><text x="108" y="957" class="tiny">Binc OS / control plane</text>
+    <circle cx="286" cy="953" r="5" fill="#59dfac"/><text x="300" y="957" class="tiny">serviços e estado</text>
+    <circle cx="438" cy="953" r="5" fill="#f7b955"/><text x="452" y="957" class="tiny">integração server-side</text>
+    <circle cx="628" cy="953" r="5" fill="#ff8f75"/><text x="642" y="957" class="tiny">auditoria / eventos</text>
+    <text x="1522" y="957" text-anchor="end" class="mono tiny">BINC OS • OPERATE WITH EVIDENCE</text>
+  </g>
+</svg>
