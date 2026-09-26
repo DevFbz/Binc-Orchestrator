@@ -23,6 +23,7 @@ from event_store import append_telegram_event, read_recent_events
 from finance_store import load_entries, save_entry
 from audit_log import append_audit, read_recent
 from campaign_matcher import identify_campaigns
+from company_finder import CompanyFinderConfigurationError, CompanyFinderUpstreamError, search_companies
 from job_actions import apply_job_action
 from job_registry import list_jobs, save_jobs, summarize_jobs
 from message_composer import dispatch_admin_message
@@ -96,6 +97,7 @@ def route_description(path: str, *, today: date | None = None):
         "/api/finance/accounts": "finance_setup",
         "/api/finance/recurrences": "finance_setup",
         "/api/campaigns": "instagram_proxy",
+        "/api/company-finder/search": "company_finder",
         "/api/tenants": "tenant_registry",
         "/api/admin/overview": "orchestrator_overview",
     }
@@ -374,10 +376,33 @@ class Handler(BaseHTTPRequestHandler):
             action_by_path = "manage_onboarding"
         elif parsed.path in {"/api/members", "/api/members/status"}:
             action_by_path = "manage_onboarding"
+        elif parsed.path == "/api/company-finder/search":
+            action_by_path = "find_companies"
         elif len(parts) == 4 and parts[:2] == ["api", "jobs"]:
             action_by_path = "manage_jobs"
         if action_by_path and not can_perform_action(CONTROL_PLANE_ROLE, action_by_path):
             self.send_json({"error": "forbidden", "code": "rbac_denied"}, 403)
+            return
+        if parsed.path == "/api/company-finder/search":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length) or b"{}")
+                result = search_companies(body)
+                append_audit(
+                    AUDIT_LOG,
+                    actor_id=CONTROL_PLANE_ACTOR,
+                    project_id="binc-orchestrator",
+                    action="search_companies",
+                    result="success",
+                    details={"query": result["query"], "companies_count": result["companies_count"]},
+                )
+                self.send_json(result)
+            except CompanyFinderConfigurationError as exc:
+                self.send_json({"error": str(exc), "code": "company_finder_not_configured"}, 503)
+            except CompanyFinderUpstreamError as exc:
+                self.send_json({"error": str(exc), "code": "company_finder_upstream_error"}, 502)
+            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
             return
         if parsed.path == "/api/projects/status":
             try:

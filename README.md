@@ -11,6 +11,7 @@ Este repositório contém a plataforma de administração:
 - integração com o CofrinIA Finance pelo bridge oficial;
 - proxy autenticado para o projeto Instagram;
 - relatórios, tarefas, jobs e documentação futura;
+- prospecção local de empresas por nicho, estado e cidade;
 - terminal administrativo de conversas, planejado em `docs/PRD_ADMIN_TERMINAL.md`.
 
 ## Repositórios separados
@@ -62,9 +63,16 @@ Variáveis server-side:
 ```text
 HERMES_CONTROL_PLANE_URL=https://endpoint-seguro
 HERMES_CONTROL_PLANE_TOKEN=segredo-server-side
+GOOGLE_PLACES_API_KEY=chave-server-side-do-google-places
 ```
 
 Nunca use `NEXT_PUBLIC_` para essas variáveis.
+
+### Localizador de empresas
+
+O módulo **Prospecção** usa o Google Places API (New) no control plane para consultar empresas por nicho, estado e cidade. A chave deve ficar somente no ambiente do backend, com as APIs necessárias habilitadas e restrição por servidor/uso.
+
+O resultado inclui apenas dados públicos retornados pela fonte — nome, endereço, telefone comercial, site, Maps e status quando disponíveis — e remove duplicados entre páginas. A interface prepara uma mensagem de abordagem, mas não envia mensagens automaticamente. CNPJ não é inferido porque não é fornecido por essa consulta.
 
 ## Vercel
 

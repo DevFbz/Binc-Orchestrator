@@ -4,8 +4,8 @@ from __future__ import annotations
 ROLES = {"global_admin", "workspace_admin", "reviewer", "reader"}
 
 _ACTIONS = {
-    "global_admin": {"read_terminal", "send_telegram", "create_financial_entry", "manage_jobs", "manage_onboarding"},
-    "workspace_admin": {"read_terminal", "send_telegram", "create_financial_entry", "manage_jobs", "manage_onboarding"},
+    "global_admin": {"read_terminal", "send_telegram", "create_financial_entry", "manage_jobs", "manage_onboarding", "find_companies"},
+    "workspace_admin": {"read_terminal", "send_telegram", "create_financial_entry", "manage_jobs", "manage_onboarding", "find_companies"},
     "reviewer": {"read_terminal"},
     "reader": {"read_terminal"},
 }

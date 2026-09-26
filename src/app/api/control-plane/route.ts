@@ -23,7 +23,7 @@ async function currentRole() {
 
 function permissionsFor(role: string | null) {
   const elevated = role === "global_admin" || role === "workspace_admin";
-  return { can_read: Boolean(role), can_send_telegram: elevated, can_manage_members: elevated, can_manage_projects: elevated, can_manage_jobs: elevated, can_create_financial_entry: elevated };
+  return { can_read: Boolean(role), can_send_telegram: elevated, can_manage_members: elevated, can_manage_projects: elevated, can_manage_jobs: elevated, can_create_financial_entry: elevated, can_find_companies: elevated };
 }
 
 async function readJson(baseUrl: string, path: string) {

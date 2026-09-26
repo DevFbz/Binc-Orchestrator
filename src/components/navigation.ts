@@ -1,8 +1,9 @@
-import { Bot, FileText, FolderKanban, LayoutDashboard, Settings2, ShieldCheck, Workflow } from "lucide-react";
+import { Bot, Building2, FileText, FolderKanban, LayoutDashboard, Settings2, ShieldCheck, Workflow } from "lucide-react";
 
 export const NAV_ITEMS = [
   { id: "overview", label: "Visão geral", icon: LayoutDashboard, href: "/", group: "primary" },
   { id: "projects", label: "Projetos", icon: FolderKanban, href: "/projects", group: "primary" },
+  { id: "company-finder", label: "Prospecção", icon: Building2, href: "/company-finder", group: "primary" },
   { id: "automations", label: "Automações", icon: Workflow, href: "/jobs", group: "primary" },
   { id: "reports", label: "Relatórios", icon: FileText, href: "/reports", group: "primary" },
   { id: "governance", label: "Governança", icon: ShieldCheck, href: "/onboarding", group: "more" },
