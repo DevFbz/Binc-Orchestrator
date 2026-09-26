@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 from collections.abc import Callable
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -14,6 +16,9 @@ from urllib.request import Request, urlopen
 GOOGLE_PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
 NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
 OSM_USER_AGENT = "Binc-Orchestrator/1.0 (local business prospecting)"
+NOMINATIM_MIN_INTERVAL_SECONDS = 1.05
+_NOMINATIM_THROTTLE_LOCK = threading.Lock()
+_NOMINATIM_LAST_REQUEST = 0.0
 GOOGLE_PLACES_FIELD_MASK = ",".join(
     [
         "places.id",
@@ -254,6 +259,7 @@ def _request_nominatim(query: str, page_size: int, *, opener: Callable = urlopen
         headers={"Accept": "application/json", "Accept-Language": "pt-BR", "User-Agent": OSM_USER_AGENT},
     )
     try:
+        _wait_for_nominatim_slot()
         with opener(request, timeout=20) as response:
             if response.status >= 400:
                 raise CompanyFinderUpstreamError(f"OpenStreetMap respondeu HTTP {response.status}")
@@ -263,6 +269,15 @@ def _request_nominatim(query: str, page_size: int, *, opener: Callable = urlopen
         raise
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         raise CompanyFinderUpstreamError("não foi possível consultar o OpenStreetMap") from exc
+
+
+def _wait_for_nominatim_slot() -> None:
+    global _NOMINATIM_LAST_REQUEST
+    with _NOMINATIM_THROTTLE_LOCK:
+        elapsed = time.monotonic() - _NOMINATIM_LAST_REQUEST
+        if elapsed < NOMINATIM_MIN_INTERVAL_SECONDS:
+            time.sleep(NOMINATIM_MIN_INTERVAL_SECONDS - elapsed)
+        _NOMINATIM_LAST_REQUEST = time.monotonic()
 
 
 def search_openstreetmap(request: dict, *, opener: Callable = urlopen) -> dict:

@@ -2,6 +2,7 @@ import json
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import company_finder
 
 from company_finder import (
     build_text_search_query,
@@ -162,3 +163,16 @@ def test_search_companies_supports_free_openstreetmap_provider_without_google_ke
     assert query["countrycodes"] == ["br"]
     assert query["extratags"] == ["1"]
     assert requests[0]["headers"]["User-agent"].startswith("Binc-Orchestrator/")
+
+
+def test_nominatim_requests_are_throttled_to_one_per_second(monkeypatch):
+    clock = iter([100.0, 100.0, 100.2, 101.3])
+    sleeps = []
+    monkeypatch.setattr(company_finder.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr(company_finder.time, "sleep", sleeps.append)
+    monkeypatch.setattr(company_finder, "_NOMINATIM_LAST_REQUEST", 0.0)
+
+    company_finder._wait_for_nominatim_slot()
+    company_finder._wait_for_nominatim_slot()
+
+    assert sleeps == [pytest.approx(0.85)]

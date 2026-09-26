@@ -114,7 +114,7 @@ export default function CompanyFinderPage() {
     </section>
 
     <section className={styles.searchPanel} aria-labelledby="finder-title">
-      <div className={styles.panelIntro}><div><p className={styles.kicker}>NOVA VARREDURA</p><h2 id="finder-title">Defina o território</h2></div><span className={styles.limit}>até 60 resultados · 3 páginas</span></div>
+      <div className={styles.panelIntro}><div><p className={styles.kicker}>NOVA VARREDURA</p><h2 id="finder-title">Defina o território</h2></div><span className={styles.limit}>até 20 resultados · modo gratuito</span></div>
       <form className={styles.form} onSubmit={search}>
         <label className={styles.fieldWide}><span>Nicho da empresa</span><input value={niche} onChange={(event) => setNiche(event.target.value)} placeholder="Ex.: clínicas odontológicas" maxLength={120} /></label>
         <label><span>Estado</span><select value={state} onChange={(event) => setState(event.target.value)}><option value="">Selecione</option>{STATES.map(([code, label]) => <option value={code} key={code}>{label} ({code})</option>)}</select></label>
