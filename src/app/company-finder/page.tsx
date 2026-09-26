@@ -76,7 +76,7 @@ export default function CompanyFinderPage() {
       const response = await fetch("/api/company-finder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche, state, city, page_size: 20, max_pages: 3 }),
+        body: JSON.stringify({ niche, state, city, page_size: 20, max_pages: 3, provider: "openstreetmap" }),
       });
       const payload = await response.json() as SearchResult & ApiError;
       if (!response.ok) throw new Error(payload.message || payload.error || (payload.code === "company_finder_not_configured" ? "Google Places ainda não foi configurado no control plane." : "Não foi possível concluir a busca."));
@@ -122,7 +122,7 @@ export default function CompanyFinderPage() {
         <label className={styles.fieldWide}><span>Oferta para a abordagem</span><input value={offer} onChange={(event) => setOffer(event.target.value)} placeholder="Ex.: site e automação de WhatsApp" maxLength={160} /></label>
         <button className={styles.primary} type="submit" disabled={working}>{working ? <LoaderCircle className={styles.spin} size={16} /> : <Search size={16} />}{working ? "Varredura em andamento…" : "Buscar empresas"}</button>
       </form>
-      <p className={styles.formHint}>A consulta usa o Google Places API no servidor. A chave nunca é enviada ao navegador.</p>
+      <p className={styles.formHint}>Modo gratuito via OpenStreetMap/Nominatim. A cobertura de empresas e contatos depende do cadastro público; confirme os dados antes de abordar.</p>
     </section>
 
     {error && <div className={styles.notice} role="alert"><XCircle size={18} /><div><strong>Busca não concluída</strong><p>{error}</p></div></div>}

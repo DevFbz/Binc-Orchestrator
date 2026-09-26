@@ -8,9 +8,12 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Callable
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 GOOGLE_PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
+NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
+OSM_USER_AGENT = "Binc-Orchestrator/1.0 (local business prospecting)"
 GOOGLE_PLACES_FIELD_MASK = ",".join(
     [
         "places.id",
@@ -103,8 +106,11 @@ def validate_search_request(payload: dict) -> dict:
     page_token = payload.get("page_token")
     if page_token is not None and (not isinstance(page_token, str) or not page_token.strip()):
         raise ValueError("page_token inválido")
+    provider = payload.get("provider")
+    if provider is not None and provider not in {"google", "openstreetmap"}:
+        raise ValueError("provider inválido")
 
-    return {
+    request = {
         "niche": niche,
         "state": state.strip().upper(),
         "city": city,
@@ -112,10 +118,35 @@ def validate_search_request(payload: dict) -> dict:
         "max_pages": max_pages,
         "page_token": page_token.strip() if isinstance(page_token, str) else None,
     }
+    if provider is not None:
+        request["provider"] = provider
+    return request
 
 
 def build_text_search_query(niche: str, state: str, city: str) -> str:
     return f"{niche}, {city} - {state}, Brasil"
+
+
+def normalize_nominatim_niche(niche: str) -> str:
+    aliases = {
+        "academias": "academia",
+        "clínicas": "clínica",
+        "dentistas": "dentista",
+        "imobiliárias": "imobiliária",
+        "padarias": "padaria",
+        "pet shops": "pet shop",
+        "restaurantes": "restaurante",
+        "salões de beleza": "salão de beleza",
+    }
+    value = niche.strip()
+    lowered = value.casefold()
+    if lowered in aliases:
+        return aliases[lowered]
+    if lowered.endswith("ões"):
+        return f"{value[:-3]}ão"
+    if lowered.endswith("s") and not lowered.endswith("ss"):
+        return value[:-1]
+    return value
 
 
 def normalize_places_response(payload: dict) -> dict:
@@ -147,6 +178,41 @@ def normalize_places_response(payload: dict) -> dict:
     return {"companies": companies, "next_page_token": _text(payload.get("nextPageToken")) or None}
 
 
+def normalize_nominatim_response(payload: object) -> list[dict]:
+    if not isinstance(payload, list):
+        raise CompanyFinderUpstreamError("resposta inválida do OpenStreetMap")
+
+    companies = []
+    for place in payload:
+        if not isinstance(place, dict):
+            continue
+        osm_type = _text(place.get("osm_type")).lower()
+        osm_id = _text(place.get("osm_id"))
+        display_name = _text(place.get("display_name"))
+        extra = place.get("extratags") if isinstance(place.get("extratags"), dict) else {}
+        namedetails = place.get("namedetails") if isinstance(place.get("namedetails"), dict) else {}
+        name = _text(namedetails.get("name")) or (display_name.split(",", 1)[0].strip() if display_name else "")
+        if not name:
+            continue
+        place_id = f"osm:{osm_type}:{osm_id}" if osm_type and osm_id else f"osm:{name}|{display_name}"
+        maps_url = f"https://www.openstreetmap.org/{osm_type}/{osm_id}" if osm_type and osm_id else ""
+        companies.append(
+            {
+                "place_id": place_id,
+                "name": name,
+                "address": display_name,
+                "phone": _text(extra.get("contact:phone")) or _text(extra.get("phone")),
+                "website": _text(extra.get("contact:website")) or _text(extra.get("website")),
+                "maps_url": maps_url,
+                "business_status": "",
+                "primary_type": _text(place.get("type")),
+                "types": [],
+                "source": "OpenStreetMap Nominatim",
+            }
+        )
+    return companies
+
+
 def _request_page(payload: dict, api_key: str, *, opener: Callable = urlopen) -> dict:
     request = Request(
         GOOGLE_PLACES_SEARCH_URL,
@@ -170,9 +236,62 @@ def _request_page(payload: dict, api_key: str, *, opener: Callable = urlopen) ->
         raise CompanyFinderUpstreamError("não foi possível consultar o Google Places") from exc
 
 
+def _request_nominatim(query: str, page_size: int, *, opener: Callable = urlopen) -> list[dict]:
+    params = urlencode(
+        {
+            "q": query,
+            "format": "jsonv2",
+            "addressdetails": "1",
+            "extratags": "1",
+            "namedetails": "1",
+            "dedupe": "1",
+            "limit": str(page_size),
+            "countrycodes": "br",
+        }
+    )
+    request = Request(
+        f"{NOMINATIM_SEARCH_URL}?{params}",
+        headers={"Accept": "application/json", "Accept-Language": "pt-BR", "User-Agent": OSM_USER_AGENT},
+    )
+    try:
+        with opener(request, timeout=20) as response:
+            if response.status >= 400:
+                raise CompanyFinderUpstreamError(f"OpenStreetMap respondeu HTTP {response.status}")
+            payload = json.loads(response.read().decode("utf-8"))
+            return payload if isinstance(payload, list) else []
+    except CompanyFinderUpstreamError:
+        raise
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise CompanyFinderUpstreamError("não foi possível consultar o OpenStreetMap") from exc
+
+
+def search_openstreetmap(request: dict, *, opener: Callable = urlopen) -> dict:
+    query = build_text_search_query(normalize_nominatim_niche(request["niche"]), request["state"], request["city"])
+    companies = []
+    seen = set()
+    for company in normalize_nominatim_response(_request_nominatim(query, request["page_size"], opener=opener)):
+        if company["place_id"] not in seen:
+            seen.add(company["place_id"])
+            companies.append(company)
+    return {
+        "ok": True,
+        "query": query,
+        "location": {"city": request["city"], "state": request["state"]},
+        "companies": companies,
+        "companies_count": len(companies),
+        "pages_scanned": 1,
+        "next_page_token": None,
+        "has_more": False,
+        "source": "OpenStreetMap Nominatim",
+        "notice": "Modo gratuito via OpenStreetMap. A cobertura e os telefones/sites dependem do cadastro público; confirme os dados antes de abordar.",
+    }
+
+
 def search_companies(payload: dict, *, api_key: str | None = None, opener: Callable = urlopen) -> dict:
     request = validate_search_request(payload)
     provider_key = (api_key or os.environ.get("GOOGLE_PLACES_API_KEY", "")).strip()
+    if request.get("provider") == "openstreetmap" or (request.get("provider") is None and not provider_key):
+        return search_openstreetmap(request, opener=opener)
     if not provider_key:
         raise CompanyFinderConfigurationError("GOOGLE_PLACES_API_KEY não configurada")
 

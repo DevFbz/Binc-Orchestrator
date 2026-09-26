@@ -10,4 +10,5 @@ __pycache__/
 *.py[cod]
 .venv/
 data/finance/entries.jsonl
+data/audit.jsonl
 .vercel

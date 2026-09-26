@@ -70,9 +70,11 @@ Nunca use `NEXT_PUBLIC_` para essas variáveis.
 
 ### Localizador de empresas
 
-O módulo **Prospecção** usa o Google Places API (New) no control plane para consultar empresas por nicho, estado e cidade. A chave deve ficar somente no ambiente do backend, com as APIs necessárias habilitadas e restrição por servidor/uso.
+O módulo **Prospecção** usa o OpenStreetMap/Nominatim no modo gratuito para consultar empresas por nicho, estado e cidade. Essa fonte não exige perfil de faturamento, mas a cobertura de empresas e contatos depende do cadastro público e deve ser confirmada antes da abordagem.
 
-O resultado inclui apenas dados públicos retornados pela fonte — nome, endereço, telefone comercial, site, Maps e status quando disponíveis — e remove duplicados entre páginas. A interface prepara uma mensagem de abordagem, mas não envia mensagens automaticamente. CNPJ não é inferido porque não é fornecido por essa consulta.
+O resultado inclui apenas dados públicos retornados pela fonte — nome, endereço, telefone comercial, site e link do OpenStreetMap quando disponíveis — e remove duplicados. A interface prepara uma mensagem de abordagem, mas não envia mensagens automaticamente. CNPJ não é inferido porque não é fornecido por essa consulta.
+
+O Google Places API (New) permanece como provedor opcional de maior cobertura: basta informar `GOOGLE_PLACES_API_KEY` no backend e solicitar explicitamente o provedor `google`. Sem essa chave, o control plane continua funcionando no modo gratuito.
 
 ## Vercel
 

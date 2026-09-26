@@ -1,9 +1,11 @@
 import json
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
 from company_finder import (
     build_text_search_query,
+    normalize_nominatim_niche,
     normalize_places_response,
     search_companies,
     validate_search_request,
@@ -30,6 +32,12 @@ def test_validate_search_request_requires_niche_city_and_brazilian_state():
 
 def test_build_text_search_query_is_specific_to_the_selected_location():
     assert build_text_search_query("salões de beleza", "SP", "Campinas") == "salões de beleza, Campinas - SP, Brasil"
+
+
+def test_normalize_nominatim_niche_handles_common_plural_business_terms():
+    assert normalize_nominatim_niche("padarias") == "padaria"
+    assert normalize_nominatim_niche("salões de beleza") == "salão de beleza"
+    assert normalize_nominatim_niche("clínicas") == "clínica"
 
 
 def test_normalize_places_response_keeps_public_business_contact_fields():
@@ -107,3 +115,50 @@ def test_search_companies_scans_available_pages_and_deduplicates_places():
     assert [company["place_id"] for company in result["companies"]] == ["places/1", "places/2"]
     assert requests[1]["body"]["pageToken"] == "page-2"
     assert requests[0]["body"]["pageSize"] == 20
+
+
+def test_search_companies_supports_free_openstreetmap_provider_without_google_key():
+    requests = []
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps(
+                [
+                    {
+                        "osm_type": "node",
+                        "osm_id": 42,
+                        "display_name": "Clínica Binc, Campinas - SP, Brasil",
+                        "namedetails": {"name": "Clínica Binc"},
+                        "lat": "-22.90",
+                        "lon": "-47.06",
+                        "type": "clinic",
+                        "extratags": {"contact:phone": "+55 19 99999-0000", "website": "https://binc.example"},
+                    }
+                ]
+            ).encode("utf-8")
+
+    def opener(request, timeout):
+        requests.append({"url": request.full_url, "headers": dict(request.headers), "timeout": timeout})
+        return FakeResponse()
+
+    result = search_companies(
+        {"niche": "clínicas", "state": "SP", "city": "Campinas", "provider": "openstreetmap"},
+        opener=opener,
+    )
+
+    query = parse_qs(urlparse(requests[0]["url"]).query)
+    assert result["source"] == "OpenStreetMap Nominatim"
+    assert result["companies_count"] == 1
+    assert result["companies"][0]["phone"] == "+55 19 99999-0000"
+    assert result["companies"][0]["website"] == "https://binc.example"
+    assert query["countrycodes"] == ["br"]
+    assert query["extratags"] == ["1"]
+    assert requests[0]["headers"]["User-agent"].startswith("Binc-Orchestrator/")
